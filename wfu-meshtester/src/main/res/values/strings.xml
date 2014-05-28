@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">WiFindUs Mesh Tester</string>
+    <string name="title_log">Log</string>
+    <string name="title_map">Map</string>
+    <string name="title_status">Status</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_exit">Exit</string>
+    <string name="app_notification_text">The WiFindUs Mesh service is running in the background.</string>
+    <string name="app_notification_subtext">Click to return to the app.</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+</resources>
