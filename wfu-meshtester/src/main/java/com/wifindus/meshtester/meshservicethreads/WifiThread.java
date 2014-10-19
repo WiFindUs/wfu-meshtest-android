@@ -23,7 +23,8 @@ public class WifiThread extends BaseThread
     private volatile WifiInfo wifiInfo;
     private volatile WifiManager wifiManager = null;
     private volatile ConnectivityManager connectivityManager = null;
-
+    public static final String WIFI_SSID = "\"Marzer WLAN\""; //"\"wifindus_public\""
+    private static final String WIFI_PSK = "\"omgwtflol87\""; //"\"a8jFIVcag82H461\""
 
     @Override
     protected long iterationInterval()
@@ -54,7 +55,7 @@ public class WifiThread extends BaseThread
 
         //are we connected to a network already?
         activeNetwork = connectivityManager.getActiveNetworkInfo();
-        if (activeNetwork == null || activeNetwork.getType() != ConnectivityManager.TYPE_WIFI || (wifiInfo = wifiManager.getConnectionInfo()).getSSID() != "\"wifindus_public\"")
+        if (activeNetwork == null || activeNetwork.getType() != ConnectivityManager.TYPE_WIFI || (wifiInfo = wifiManager.getConnectionInfo()).getSSID().compareTo(WIFI_SSID) != 0)
         {
             List<WifiConfiguration> items = wifiManager.getConfiguredNetworks();
             WifiConfiguration wifindus_public = null;
@@ -62,7 +63,7 @@ public class WifiThread extends BaseThread
 
             for (WifiConfiguration item : items)
             {
-                if (item.SSID == "\"wifindus_public\"")
+                if (item.SSID.compareTo(WIFI_SSID) == 0)
                     wifindus_public = item;
             }
 
@@ -70,7 +71,7 @@ public class WifiThread extends BaseThread
             if (wifindus_public == null)
             {
                 wifindus_public = new WifiConfiguration();
-                wifindus_public.SSID = "\"wifindus_public\"";
+                wifindus_public.SSID = WIFI_SSID;
                 wifindus_public.priority = 1000;
                 wifindus_public.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
                 wifindus_public.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
@@ -80,7 +81,7 @@ public class WifiThread extends BaseThread
                 wifindus_public.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
                 wifindus_public.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
                 wifindus_public.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-                wifindus_public.preSharedKey = "\"a8jFIVcag82H461\"";
+                wifindus_public.preSharedKey = WIFI_PSK;
 
                 id = wifiManager.addNetwork(wifindus_public);
             }

@@ -20,7 +20,7 @@ public class ServiceLog
     private volatile int maximumLogLevel = LOG_INFO;
     private volatile CopyOnWriteArrayList<ServiceLogItem> unsyncedItems = new CopyOnWriteArrayList<ServiceLogItem>();
 
-    public log(int level, String tag, String msg)
+    public void log(int level, String tag, String msg)
     {
         if (level <= LOG_NONE || level > LOG_VERBOSE || level > maximumLogLevel || tag == "" || msg == "")
             return;

@@ -8,6 +8,8 @@ import android.graphics.Color;
 import android.os.IBinder;
 
 import com.wifindus.meshtester.interfaces.MeshApplicationSubscriber;
+import com.wifindus.meshtester.meshservicethreads.LocationThread;
+import com.wifindus.meshtester.meshservicethreads.UpdateThread;
 import com.wifindus.meshtester.meshservicethreads.WifiThread;
 
 public class MeshService extends Service implements MeshApplicationSubscriber
@@ -15,6 +17,8 @@ public class MeshService extends Service implements MeshApplicationSubscriber
     private boolean ready = false;
     public static final String RESTORE_FROM_SERVICE = "RESTORE_FROM_SERVICE";
     private WifiThread wifiThread = null;
+    private LocationThread locationThread = null;
+    private UpdateThread updateThread = null;
 
     public MeshService()
     {
@@ -58,6 +62,10 @@ public class MeshService extends Service implements MeshApplicationSubscriber
         //start threads
         wifiThread = new WifiThread();
         wifiThread.start();
+        locationThread = new LocationThread();
+        locationThread.start();
+        updateThread = new UpdateThread();
+        updateThread.start();
 
         //set ready
         ready = true;
@@ -69,6 +77,8 @@ public class MeshService extends Service implements MeshApplicationSubscriber
     @Override
     public void onDestroy()
     {
+        updateThread.cancelThread();
+        locationThread.cancelThread();
         wifiThread.cancelThread();
         app().setMeshService(null);
         stopForeground(true);
