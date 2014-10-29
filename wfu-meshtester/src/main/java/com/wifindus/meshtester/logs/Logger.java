@@ -20,6 +20,7 @@ public class Logger
     public static final int LOG_WARNING = 1;
     public static final int LOG_INFO = 0;
     private static int minimumLevel = LOG_INFO;
+    private static volatile ArrayList<LoggerItem> allItems = new ArrayList<LoggerItem>();
     private static volatile ArrayList<LoggerItem> unsyncedItems = new ArrayList<LoggerItem>();
 
     public static final void ex(LogSender sender, Exception ex)
@@ -42,12 +43,18 @@ public class Logger
         log(LOG_INFO, sender, msg, args);
     }
 
+    public static final List<LoggerItem> all()
+    {
+        return allItems;
+    }
+
     public static final List<LoggerItem> flush()
     {
         ArrayList<LoggerItem> returnArray = new ArrayList<LoggerItem>();
         synchronized (unsyncedItems)
         {
             returnArray.addAll(unsyncedItems);
+            allItems.addAll(unsyncedItems);
             unsyncedItems.clear();
         }
         return returnArray;

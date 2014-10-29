@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
+import android.util.Log;
 
 import com.wifindus.meshtester.logs.Logger;
 
@@ -40,6 +41,7 @@ public class MeshApplication extends Application
     private static volatile long meshConnectedSince = 0;
     private static volatile int meshAddress = 0;
     private static volatile InetAddress meshInetAddress = null;
+    private static volatile String meshHostName = "";
     private static volatile int meshNodeNumber = 0;
     private static volatile String meshNodeHash = "";
 
@@ -125,6 +127,11 @@ public class MeshApplication extends Application
         return meshInetAddress;
     }
 
+    public static final String getMeshHostName()
+    {
+        return meshHostName;
+    }
+
     public static final boolean isDirty()
     {
         return dirty;
@@ -171,7 +178,7 @@ public class MeshApplication extends Application
     {
         if (connected == meshConnected)
             return;
-        connected = meshConnected;
+        meshConnected = connected;
         meshConnectedSince = connected ? System.currentTimeMillis() : 0;
         dirty = true;
 
@@ -196,18 +203,20 @@ public class MeshApplication extends Application
                         (meshAddress >> 8 & 0xff),
                         (meshAddress >> 16 & 0xff),
                         (meshAddress >> 24 & 0xff)));
+                meshHostName = meshInetAddress.getHostName();
             }
             catch (UnknownHostException e)
             {
                 meshInetAddress = null;
+                meshHostName = "";
             }
         }
-        else
+        else {
             meshInetAddress = null;
+            meshHostName = "";
+        }
 
         Static.broadcastSimpleIntent(context, ACTION_UPDATE_MESH_ADDRESS);
     }
-
-
 }
 

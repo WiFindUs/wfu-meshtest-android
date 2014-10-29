@@ -63,8 +63,7 @@ public class StatusFragment extends BaseFragment
         if (MeshApplication.isMeshConnected())
         {
             connectionState.setText("Yes");
-            meshAddress.setText(MeshApplication.getMeshAddress() == null ?
-                "..." : MeshApplication.getMeshAddress().getHostName());
+            meshAddress.setText(MeshApplication.getMeshHostName());
 
             //todo
             node.setText("");

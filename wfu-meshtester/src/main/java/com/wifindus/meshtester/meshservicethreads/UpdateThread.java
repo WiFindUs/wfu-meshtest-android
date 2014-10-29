@@ -60,7 +60,7 @@ public class UpdateThread extends BaseThread
         Logger.i(this, "Initializing updater thread...");
         try
         {
-            updateSocket = new DatagramSocket(WIFI_SERVER_PORT);
+            updateSocket = new DatagramSocket();
             Logger.i(this, "Updater thread OK.");
 
         }
@@ -79,7 +79,7 @@ public class UpdateThread extends BaseThread
             return;
 
         long time = System.currentTimeMillis();
-        if (!MeshApplication.isDirty() && (time - MeshApplication.lastCleaned()) < 15000)
+        if (!MeshApplication.isDirty() && (time - MeshApplication.lastCleaned()) < 30000)
             return;
 
         //generate message content
@@ -101,7 +101,6 @@ public class UpdateThread extends BaseThread
         try
         {
             byte[] buf = message.getBytes();
-            Log.d("eye", "UDP message sent: " + message);
             updateSocket.send(new DatagramPacket(buf, buf.length, InetAddress.getByName(WIFI_SERVER), WIFI_SERVER_PORT));
             MeshApplication.clean(logContext());
         }

@@ -91,10 +91,10 @@ public class WifiThread extends BaseThread
         //is wifi disabled?
         if (!wifiManager.isWifiEnabled())
         {
+            MeshApplication.updateMeshConnected(logContext(), false);
             wifiManager.setWifiEnabled(true);
             if (state != STATE_WIFI_WAITING)
             {
-                MeshApplication.updateMeshConnected(logContext(), false);
                 Logger.w(this, "WiFi disabled, re-enabling...");
                 state = STATE_WIFI_WAITING;
             }
@@ -107,27 +107,24 @@ public class WifiThread extends BaseThread
             || activeNetwork.getType() != ConnectivityManager.TYPE_WIFI
             || (wifiInfo = wifiManager.getConnectionInfo()).getSSID().compareTo(WIFI_SSID) != 0)
         {
-            int id = getWifindusPublicID();
+            MeshApplication.updateMeshConnected(logContext(), false);
+            wifiManager.enableNetwork(getWifindusPublicID(), true);
+            wifiManager.reconnect();
 
-            if (id != -1)
+            if (state != STATE_WIFI_CONNECTING)
             {
-                wifiManager.enableNetwork(id, true);
-                wifiManager.reconnect();
-
-                if (state != STATE_WIFI_CONNECTING)
-                {
-                    MeshApplication.updateMeshConnected(logContext(), false);
-                    if (state == STATE_WIFI_OK)
-                        Logger.w(this, "Connection to mesh lost!");
-                    Logger.i(this, "Connecting to wifindus_public...");
-                    state = STATE_WIFI_CONNECTING;
-                }
+                if (state == STATE_WIFI_OK)
+                    Logger.w(this, "Connection to mesh lost!");
+                Logger.i(this, "Connecting to wifindus_public...");
+                state = STATE_WIFI_CONNECTING;
             }
-            else if (state != STATE_WIFI_OK)
+        }
+        else
+        {
+            MeshApplication.updateMeshAddress(logContext(), wifiInfo.getIpAddress());
+            MeshApplication.updateMeshConnected(logContext(), true);
+            if (state != STATE_WIFI_OK)
             {
-                MeshApplication.updateMeshAddress(logContext(), wifiInfo.getIpAddress());
-                MeshApplication.updateMeshConnected(logContext(), true);
-
                 Logger.i(this, "Connected to mesh OK.");
                 state = STATE_WIFI_OK;
             }

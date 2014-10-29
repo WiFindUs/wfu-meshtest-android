@@ -75,6 +75,10 @@ public class MainActivity extends FragmentActivity
         meshActivityReceiver = new MeshActivityReceiver();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(Logger.ACTION_UPDATE_LOG);
+        intentFilter.addAction(MeshApplication.ACTION_UPDATE_CONNECTION_STATE);
+        intentFilter.addAction(MeshApplication.ACTION_UPDATE_LOCATION);
+        intentFilter.addAction(MeshApplication.ACTION_UPDATE_MESH_ADDRESS);
+        intentFilter.addAction(MeshApplication.ACTION_UPDATE_CLEANED);
         registerReceiver(meshActivityReceiver, intentFilter);
 
         //create the background service
@@ -219,9 +223,9 @@ public class MainActivity extends FragmentActivity
         {
             switch (position)
             {
-                case PAGE_STATUS: return new StatusFragment();
-                case PAGE_MAP: return new MapFragment();
-                case PAGE_LOG: return new LogFragment();
+                case PAGE_STATUS: return statusFragment = new StatusFragment();
+                case PAGE_MAP: return mapFragment = new MapFragment();
+                case PAGE_LOG: return logFragment = new LogFragment();
             }
             return null;
         }

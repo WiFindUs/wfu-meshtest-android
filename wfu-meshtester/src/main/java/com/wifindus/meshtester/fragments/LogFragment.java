@@ -42,12 +42,18 @@ public class LogFragment extends BaseFragment
     public void onResume()
     {
         super.onResume();
-        updateLogItems();
+        logText.setText("");
+        addLogItems(Logger.all());
+        addLogItems(Logger.flush());
     }
 
     public void updateLogItems()
     {
-        List<LoggerItem> items = Logger.flush();
+        addLogItems(Logger.flush());
+    }
+
+    private void addLogItems(List<LoggerItem> items)
+    {
         StringBuilder sb = new StringBuilder();
         for (LoggerItem item : items)
         {
