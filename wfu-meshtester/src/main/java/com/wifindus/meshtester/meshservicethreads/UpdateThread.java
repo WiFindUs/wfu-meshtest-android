@@ -1,10 +1,12 @@
 package com.wifindus.meshtester.meshservicethreads;
 
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.util.Log;
 
 import com.wifindus.meshtester.MeshApplication;
+import com.wifindus.meshtester.logs.Logger;
 import com.wifindus.meshtester.meshservicethreads.BaseThread;
 
 import java.io.IOException;
@@ -19,41 +21,73 @@ import java.net.UnknownHostException;
  */
 public class UpdateThread extends BaseThread
 {
+    private static final String TAG = UpdateThread.class.getName();
     private volatile DatagramSocket updateSocket;
-    public static final String WIFI_SERVER = "192.168.1.2";
-    public static final int WIFI_SERVER_PORT = 33339;
+    private static final String WIFI_SERVER = "192.168.1.1";
+    private static final int WIFI_SERVER_PORT = 33339;
+
+    /////////////////////////////////////////////////////////////////////
+    // CONSTRUCTORS
+    /////////////////////////////////////////////////////////////////////
+
+    public UpdateThread(Context launchingContext)
+    {
+        super(launchingContext);
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    // PUBLIC METHODS
+    /////////////////////////////////////////////////////////////////////
+
+    public String logTag()
+    {
+        return TAG;
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    // PROTECTED METHODS
+    /////////////////////////////////////////////////////////////////////
 
     @Override
     protected long iterationInterval()
     {
-        return 5000;
+        return 3000;
     }
 
     @Override
     protected void prepare()
     {
+        Logger.i(this, "Initializing updater thread...");
         try
         {
             updateSocket = new DatagramSocket(WIFI_SERVER_PORT);
+            Logger.i(this, "Updater thread OK.");
+
         }
         catch (SocketException e)
         {
             updateSocket = null;
-            e.printStackTrace();
+            Logger.e(this, "Error creating socket!");
+            cancelThread();
         }
     }
 
     @Override
     protected void iteration()
     {
-        if (updateSocket == null)
+        if (!MeshApplication.isMeshConnected())
+            return;
+
+        long time = System.currentTimeMillis();
+        if (!MeshApplication.isDirty() && (time - MeshApplication.lastCleaned()) < 15000)
             return;
 
         //generate message content
-        String message = "hash:" + MeshApplication.ref().getHash()
+        String message = "hash:" + MeshApplication.getHash()
+            + "|timestamp:" + time
 			+ "|type:DEVICE"
 			+ "|deviceType:PHO";
-        Location loc = MeshApplication.ref().getLastLocation();
+        Location loc = MeshApplication.getLocation();
 		if (loc != null)
 		{
             message += "|latitude:" + loc.getLatitude();
@@ -69,6 +103,7 @@ public class UpdateThread extends BaseThread
             byte[] buf = message.getBytes();
             Log.d("eye", "UDP message sent: " + message);
             updateSocket.send(new DatagramPacket(buf, buf.length, InetAddress.getByName(WIFI_SERVER), WIFI_SERVER_PORT));
+            MeshApplication.clean(logContext());
         }
         catch (UnknownHostException e)
         {

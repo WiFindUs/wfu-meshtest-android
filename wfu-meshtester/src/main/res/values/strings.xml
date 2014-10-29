@@ -9,6 +9,19 @@
     <string name="action_exit">Exit</string>
     <string name="app_notification_text">The WiFindUs Mesh service is running in the background.</string>
     <string name="app_notification_subtext">Click to return to the app.</string>
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="data_latlong">%1$f°, %2$f°</string>
+    <string name="data_node">%1$d (%2$s)</string>
 
+    <!-- status page -->
+    <string name="status_uptime">On since:</string>
+    <string name="status_since">Since:</string>
+    <string name="status_connected">Connected:</string>
+    <string name="status_ip_address">IP Address:</string>
+    <string name="status_node">Node:</string>
+    <string name="status_node_ip_address">Node IP:</string>
+    <string name="status_mesh_network">Mesh Network</string>
+    <string name="status_device">Device</string>
+    <string name="status_location">Location:</string>
+    <string name="status_hash">Hash:</string>
+    <string name="status_last_cleaned">Update sent:</string>
 </resources>

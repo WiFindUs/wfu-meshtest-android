@@ -3,22 +3,25 @@ package com.wifindus.meshtester;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.IBinder;
 
-import com.wifindus.meshtester.interfaces.MeshApplicationSubscriber;
+import com.wifindus.meshtester.logs.LogSender;
+import com.wifindus.meshtester.logs.Logger;
 import com.wifindus.meshtester.meshservicethreads.LocationThread;
 import com.wifindus.meshtester.meshservicethreads.UpdateThread;
 import com.wifindus.meshtester.meshservicethreads.WifiThread;
 
-public class MeshService extends Service implements MeshApplicationSubscriber
+public class MeshService extends Service implements LogSender
 {
-    private boolean ready = false;
     public static final String RESTORE_FROM_SERVICE = "RESTORE_FROM_SERVICE";
-    private WifiThread wifiThread = null;
-    private LocationThread locationThread = null;
-    private UpdateThread updateThread = null;
+    private static final String TAG = UpdateThread.class.getName();
+    private volatile WifiThread wifiThread = null;
+    private volatile LocationThread locationThread = null;
+    private volatile UpdateThread updateThread = null;
+    private volatile boolean ready = false;
 
     public MeshService()
     {
@@ -48,7 +51,7 @@ public class MeshService extends Service implements MeshApplicationSubscriber
             .setOngoing(true)
             .setAutoCancel(false)
             .setContentIntent(pendingIntent)
-            .setLights(Color.RED, 1000, 3000)
+            .setLights(Color.MAGENTA, 200, 3000)
             .setSubText(getString(R.string.app_notification_subtext));
         Notification notification = builder.build();
         notification.flags |= Notification.FLAG_NO_CLEAR;
@@ -57,18 +60,19 @@ public class MeshService extends Service implements MeshApplicationSubscriber
         startForeground(1337, notification);
 
         //attach to application
-        app().setMeshService(this);
+        MeshApplication.setMeshService(this);
 
         //start threads
-        wifiThread = new WifiThread();
+        wifiThread = new WifiThread(this);
         wifiThread.start();
-        locationThread = new LocationThread();
+        locationThread = new LocationThread(this);
         locationThread.start();
-        updateThread = new UpdateThread();
+        updateThread = new UpdateThread(this);
         updateThread.start();
 
         //set ready
         ready = true;
+        Logger.i(this, "Service started OK.");
 
         //return sticky flag
         return START_STICKY;
@@ -80,18 +84,25 @@ public class MeshService extends Service implements MeshApplicationSubscriber
         updateThread.cancelThread();
         locationThread.cancelThread();
         wifiThread.cancelThread();
-        app().setMeshService(null);
+        MeshApplication.setMeshService(null);
+        Logger.i(this, "Service stopped.");
         stopForeground(true);
-    }
-
-    @Override
-    public MeshApplication app()
-    {
-        return (MeshApplication)getApplication();
     }
 
     public boolean isReady()
     {
         return ready;
+    }
+
+    @Override
+    public String logTag()
+    {
+        return TAG;
+    }
+
+    @Override
+    public Context logContext()
+    {
+        return this;
     }
 }

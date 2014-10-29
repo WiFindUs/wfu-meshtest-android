@@ -188,4 +188,26 @@ public abstract class Static
     {
         deleteRecursive(fileOrDirectory, true);
     }
+
+    public static final String formatTimer(long milliseconds)
+    {
+        if (milliseconds > 86400000) //days
+            return "" + (milliseconds /= 86400000) + " days";
+        else if (milliseconds > 3600000) //hours
+            return "" + (milliseconds /= 3600000) + " hours";
+        else if (milliseconds > 60000) //minutes
+            return "" + (milliseconds /= 60000) + " minutes";
+        else if (milliseconds > 1000) //seconds
+            return "" + (milliseconds /= 1000) + " seconds";
+        return "" + milliseconds + " milliseconds";
+    }
+
+    public static final void broadcastSimpleIntent(Context context, String action)
+    {
+        if (context == null || action == null)
+            return;
+        Intent intent = new Intent();
+        intent.setAction(action);
+        context.sendBroadcast(intent);
+    }
 }

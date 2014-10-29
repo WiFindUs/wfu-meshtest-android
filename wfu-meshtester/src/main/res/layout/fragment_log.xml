@@ -4,10 +4,18 @@
     android:layout_height="match_parent"
     tools:context="com.wifindus.meshtester.fragments.LogFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+    <ScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/log_scroll"
+        android:background="@android:color/transparent">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:id="@+id/log_text"
+            android:typeface="monospace" />
+    </ScrollView>
 
 </FrameLayout>

@@ -3,7 +3,10 @@ package com.wifindus.meshtester;
 import java.util.Locale;
 
 import android.app.ActionBar;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
@@ -11,20 +14,35 @@ import android.support.v4.app.Fragment;
 import android.app.FragmentTransaction;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import com.wifindus.meshtester.fragments.LogFragment;
 import com.wifindus.meshtester.fragments.MapFragment;
 import com.wifindus.meshtester.fragments.StatusFragment;
-import com.wifindus.meshtester.interfaces.MeshApplicationSubscriber;
-import com.wifindus.meshtester.interfaces.MeshServiceSubscriber;
+import com.wifindus.meshtester.logs.LogSender;
+import com.wifindus.meshtester.logs.Logger;
 
 
-public class MainActivity extends FragmentActivity implements ActionBar.TabListener, MeshApplicationSubscriber, MeshServiceSubscriber
+public class MainActivity extends FragmentActivity
+    implements ActionBar.TabListener, LogSender
 {
-    SectionsPagerAdapter mSectionsPagerAdapter;
-    ViewPager mViewPager;
+    public static final int PAGE_STATUS = 0;
+    public static final int PAGE_MAP = 1;
+    public static final int PAGE_LOG = 2;
+    private static final String TAG = MainActivity.class.getName();
+
+    private MeshActivityReceiver meshActivityReceiver = null;
+    private MapFragment mapFragment = null;
+    private StatusFragment statusFragment = null;
+    private LogFragment logFragment = null;
+    private SectionsPagerAdapter sectionsPagerAdapter = null;
+    private ViewPager viewPager = null;
+
+    /////////////////////////////////////////////////////////////////////
+    // CONSTRUCTORS
+    /////////////////////////////////////////////////////////////////////
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -35,39 +53,45 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
         // Set up the action bar.
         final ActionBar actionBar = getActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+        sectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
         // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager) findViewById(R.id.pager);
-        mViewPager.setAdapter(mSectionsPagerAdapter);
-        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+        viewPager = (ViewPager) findViewById(R.id.pager);
+        viewPager.setAdapter(sectionsPagerAdapter);
+        viewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
                 actionBar.setSelectedNavigationItem(position);
             }
         });
-        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+        for (int i = 0; i < sectionsPagerAdapter.getCount(); i++) {
             actionBar.addTab(
-                    actionBar.newTab()
-                            .setText(mSectionsPagerAdapter.getPageTitle(i))
-                            .setTabListener(this));
+                actionBar.newTab()
+                    .setText(sectionsPagerAdapter.getPageTitle(i))
+                    .setTabListener(this));
         }
+
+        //set up the broadcast receiver
+        meshActivityReceiver = new MeshActivityReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(Logger.ACTION_UPDATE_LOG);
+        registerReceiver(meshActivityReceiver, intentFilter);
 
         //create the background service
         if (!getIntent().getBooleanExtra(MeshService.RESTORE_FROM_SERVICE,false))
             startMeshService();
     }
 
-    private void startMeshService()
+    @Override
+    protected void onDestroy()
     {
-        Intent serviceIntent = new Intent(this, MeshService.class);
-        startService(serviceIntent);
+        unregisterReceiver(meshActivityReceiver);
+        super.onDestroy();
     }
 
-    private void stopMeshService()
-    {
-        stopService(new Intent(this, MeshService.class));
-    }
+    /////////////////////////////////////////////////////////////////////
+    // PUBLIC METHODS
+    /////////////////////////////////////////////////////////////////////
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -103,7 +127,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
     public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
         // When the given tab is selected, switch to the corresponding page in
         // the ViewPager.
-        mViewPager.setCurrentItem(tab.getPosition());
+        viewPager.setCurrentItem(tab.getPosition());
     }
 
     @Override
@@ -114,29 +138,77 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
     public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
     }
 
-    @Override
-    public MeshApplication app()
-    {
-        return MeshApplication.ref();
-    }
-
-    @Override
     public MeshService service()
     {
-        return app().getMeshService();
+        return MeshApplication.getMeshService();
     }
 
-    @Override
     public boolean serviceReady()
     {
         return service() != null && service().isReady();
+    }
+
+    public SystemManager systems()
+    {
+        return MeshApplication.systems();
+    }
+
+    @Override
+    public String logTag()
+    {
+        return TAG;
+    }
+
+    @Override
+    public Context logContext()
+    {
+        return this;
+    }
+
+
+    /////////////////////////////////////////////////////////////////////
+    // PRIVATE METHODS
+    /////////////////////////////////////////////////////////////////////
+
+    private void startMeshService()
+    {
+        Logger.i(this, "Starting mesh service...");
+        Intent serviceIntent = new Intent(this, MeshService.class);
+        startService(serviceIntent);
+    }
+
+    private void stopMeshService()
+    {
+        Logger.i(this, "Stopping mesh service...");
+        stopService(new Intent(this, MeshService.class));
+    }
+
+    private class MeshActivityReceiver extends BroadcastReceiver
+    {
+        @Override
+        public void onReceive(Context arg0, Intent arg1)
+        {
+            if (arg1.getAction().equals(Logger.ACTION_UPDATE_LOG))
+            {
+                if (logFragment != null)
+                    logFragment.updateLogItems();
+            }
+            else if (arg1.getAction().equals(MeshApplication.ACTION_UPDATE_CONNECTION_STATE)
+             || arg1.getAction().equals(MeshApplication.ACTION_UPDATE_LOCATION)
+             || arg1.getAction().equals(MeshApplication.ACTION_UPDATE_MESH_ADDRESS)
+             || arg1.getAction().equals(MeshApplication.ACTION_UPDATE_CLEANED))
+            {
+                if (statusFragment != null)
+                    statusFragment.updateStatusItems();
+            }
+        }
     }
 
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
      */
-    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+    private class SectionsPagerAdapter extends FragmentPagerAdapter {
 
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
@@ -147,10 +219,11 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
         {
             switch (position)
             {
-                case 1: return new StatusFragment();
-                case 2: return new MapFragment();
+                case PAGE_STATUS: return new StatusFragment();
+                case PAGE_MAP: return new MapFragment();
+                case PAGE_LOG: return new LogFragment();
             }
-            return new LogFragment();
+            return null;
         }
 
         @Override
@@ -162,13 +235,14 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
         @Override
         public CharSequence getPageTitle(int position) {
             Locale l = Locale.getDefault();
-            switch (position) {
-                case 0:
-                    return getString(R.string.title_log).toUpperCase(l);
-                case 1:
+            switch (position)
+            {
+                case PAGE_STATUS:
                     return getString(R.string.title_status).toUpperCase(l);
-                case 2:
+                case PAGE_MAP:
                     return getString(R.string.title_map).toUpperCase(l);
+                case PAGE_LOG:
+                    return getString(R.string.title_log).toUpperCase(l);
             }
             return null;
         }

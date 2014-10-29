@@ -1,21 +1,70 @@
 package com.wifindus.meshtester.meshservicethreads;
 
+import android.content.Context;
+
 import com.wifindus.meshtester.MeshApplication;
 import com.wifindus.meshtester.MeshService;
 import com.wifindus.meshtester.SystemManager;
-import com.wifindus.meshtester.interfaces.MeshApplicationSubscriber;
-import com.wifindus.meshtester.interfaces.MeshServiceSubscriber;
-import com.wifindus.meshtester.interfaces.SystemManagerSubscriber;
-import com.wifindus.meshtester.interfaces.ThreadWaitCondition;
+import com.wifindus.meshtester.logs.LogSender;
 
 /**
  * Created by marzer on 25/04/2014.
  */
-public abstract class BaseThread extends Thread implements MeshApplicationSubscriber, MeshServiceSubscriber, SystemManagerSubscriber
+public abstract class BaseThread extends Thread implements LogSender
 {
+    private static final long WAIT_LOOP_INTERVAL = 200;
     private static volatile boolean cancelAll = false;
     private volatile boolean cancel = false;
-    public static final long WAIT_LOOP_INTERVAL = 200;
+    private volatile Context context;
+
+    /////////////////////////////////////////////////////////////////////
+    // CONSTRUCTORS
+    /////////////////////////////////////////////////////////////////////
+
+    public BaseThread(Context launchingContext)
+    {
+        context = launchingContext;
+    }
+
+    public Context logContext()
+    {
+        return context;
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    // PUBLIC METHODS
+    /////////////////////////////////////////////////////////////////////
+
+    /**
+     * Run event of the thread. Children cannot override it - instead they should implement their thread functionality by overriding {@link #prepare()}, {@link #iteration()}, and {@link #cleanup()}.
+     */
+    @Override
+    public final void run()
+    {
+        prepare();
+        while (!isCancelled())
+        {
+            iteration();
+            if (!waitloop(iterationInterval()))
+                break;
+        }
+        cleanup();
+    }
+
+    public MeshService service()
+    {
+        return MeshApplication.getMeshService();
+    }
+
+    public boolean serviceReady()
+    {
+        return service() != null && service().isReady();
+    }
+
+    public SystemManager systems()
+    {
+        return MeshApplication.systems();
+    }
 
     public boolean isCancelled()
     {
@@ -31,6 +80,10 @@ public abstract class BaseThread extends Thread implements MeshApplicationSubscr
     {
         cancel = true;
     }
+
+    /////////////////////////////////////////////////////////////////////
+    // PROTECTED METHODS
+    /////////////////////////////////////////////////////////////////////
 
     /**
      * Waits in a loop for the specified timeout, checking for cancelled state and condition state at each iteration.
@@ -113,22 +166,6 @@ public abstract class BaseThread extends Thread implements MeshApplicationSubscr
     }
 
     /**
-     * Run event of the thread. Children cannot override it - instead they should implement their thread functionality by overriding {@link #prepare()}, {@link #iteration()}, and {@link #cleanup()}.
-     */
-    @Override
-    public final void run()
-    {
-        prepare();
-        while (!isCancelled())
-        {
-            iteration();
-            if (!waitloop(iterationInterval()))
-                break;
-        }
-        cleanup();
-    }
-
-    /**
      * Called before {@link #iteration()} in {@link #run()}. Children should override this to instantiate key objects etc.
     */
     protected abstract void prepare();
@@ -142,28 +179,4 @@ public abstract class BaseThread extends Thread implements MeshApplicationSubscr
      * Called after {@link #iteration()} in {@link #run()}. Children should override this to perform any cleanup.
      */
     protected abstract void cleanup();
-
-    @Override
-    public MeshApplication app()
-    {
-        return MeshApplication.ref();
-    }
-
-    @Override
-    public MeshService service()
-    {
-        return app().getMeshService();
-    }
-
-    @Override
-    public boolean serviceReady()
-    {
-        return service() != null && service().isReady();
-    }
-
-    @Override
-    public SystemManager systems()
-    {
-        return app().systems();
-    }
 }

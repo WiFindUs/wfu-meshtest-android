@@ -1,15 +1,18 @@
 package com.wifindus.meshtester.meshservicethreads;
 
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
 import com.wifindus.meshtester.MeshApplication;
+import com.wifindus.meshtester.logs.Logger;
 import com.wifindus.meshtester.meshservicethreads.BaseThread;
 
 /**
@@ -17,89 +20,42 @@ import com.wifindus.meshtester.meshservicethreads.BaseThread;
  */
 public class LocationThread extends BaseThread implements LocationListener
 {
-    private volatile boolean hasLocation = false;
-    private volatile boolean hasGPS = false;
-    private volatile boolean hasNetworkLocation = false;
-    private volatile Handler handler = null;
+    private static final String TAG = UpdateThread.class.getName();
+    private static final int TWO_MINUTES = 1000 * 60 * 2;
+    private boolean hasLocation = false;
+    private boolean hasGPS = false;
+    private boolean hasNetworkLocation = false;
+    private Handler handler = null;
+    private boolean ok = false;
+    private Location location = null;
 
-    @Override
-    protected long iterationInterval()
+    /////////////////////////////////////////////////////////////////////
+    // CONSTRUCTORS
+    /////////////////////////////////////////////////////////////////////
+
+    public LocationThread(Context launchingContext)
     {
-        if (!hasLocation || (!hasGPS && !hasNetworkLocation))
-            return 60000;
-        else if (!hasGPS)
-            return 5000;
-        else if (!hasNetworkLocation)
-            return 2000;
-        return 1000;
+        super(launchingContext);
     }
 
-    @Override
-    protected void prepare()
+    /////////////////////////////////////////////////////////////////////
+    // PUBLIC METHODS
+    /////////////////////////////////////////////////////////////////////
+
+    public String logTag()
     {
-        Log.d("eye", "LocationThread.prepare()");
-
-        handler = new Handler(Looper.getMainLooper());
-        hasLocation = systems().getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION);
-        hasGPS = systems().getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS);
-        hasNetworkLocation = systems().getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION_NETWORK);
-        if (hasLocation && (hasGPS || hasNetworkLocation))
-        {
-            Log.d("eye", "LocationThread.prepare(): pushing task to handler");
-
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-
-                    Log.d("eye", "Location updates requested");
-
-                    Criteria criteria = new Criteria();
-                    criteria.setAccuracy(Criteria.ACCURACY_FINE);
-                    criteria.setAltitudeRequired(false);
-                    criteria.setBearingRequired(false);
-                    criteria.setHorizontalAccuracy(Criteria.ACCURACY_HIGH);
-                    criteria.setCostAllowed(false);
-                    criteria.setPowerRequirement(Criteria.POWER_HIGH);
-
-                    MeshApplication.ref().systems().getLocationManager().requestLocationUpdates(
-                            1000,
-                            5,
-                            criteria,
-                            LocationThread.this,
-                            null
-                    );
-                }
-            });
-        }
-        else
-            Log.e("eye", "Location update request failed; invalid packages!");
-    }
-
-    @Override
-    protected void iteration()
-    {
-        if (!hasLocation || (!hasGPS && !hasNetworkLocation))
-            return;
-    }
-
-    @Override
-    protected void cleanup()
-    {
-        if (hasLocation && (hasGPS || hasNetworkLocation))
-            MeshApplication.ref().systems().getLocationManager().removeUpdates(this);
+        return TAG;
     }
 
     @Override
     public void onLocationChanged(Location location)
     {
-        Log.d("eye", "Location updated: " + location.toString());
-        MeshApplication.ref().updateLastLocation(location);
+        assessLocation(location);
     }
 
     @Override
     public void onProviderDisabled(String provider)
     {
-
 
     }
 
@@ -111,8 +67,144 @@ public class LocationThread extends BaseThread implements LocationListener
     }
 
     @Override
-    public  void onStatusChanged(String provider, int status, Bundle extras)
+    public void onStatusChanged(String provider, int status, Bundle extras)
     {
 
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    // PROTECTED METHODS
+    /////////////////////////////////////////////////////////////////////
+
+    @Override
+    protected long iterationInterval()
+    {
+        if (!hasGPS) //phone location only
+            return 10000;
+        else if (!hasNetworkLocation) //GPS location only
+            return 5000;
+        return 2500; //both
+    }
+
+    @Override
+    protected void prepare()
+    {
+        Logger.i(this, "Initializing location thread...");
+
+        handler = new Handler(Looper.getMainLooper());
+        hasLocation = systems().getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION);
+        hasGPS = systems().getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS);
+        hasNetworkLocation = systems().getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION_NETWORK);
+        if (!hasLocation || !(hasGPS || hasNetworkLocation))
+        {
+            Logger.e(this, "Missing location packages!");
+            cancelThread();
+            return;
+        }
+        handler.post(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                Criteria criteria = new Criteria();
+                criteria.setAccuracy(Criteria.ACCURACY_FINE);
+                criteria.setAltitudeRequired(false);
+                criteria.setBearingRequired(false);
+                criteria.setHorizontalAccuracy(Criteria.ACCURACY_HIGH);
+                criteria.setCostAllowed(false);
+                criteria.setPowerRequirement(Criteria.POWER_HIGH);
+
+                systems().getLocationManager().requestLocationUpdates(
+                        iterationInterval(),
+                        5,
+                        criteria,
+                        LocationThread.this,
+                        null
+                );
+            }
+        });
+
+        if (hasGPS)
+            assessLocation(systems().getLocationManager().getLastKnownLocation(LocationManager.GPS_PROVIDER));
+        if (hasNetworkLocation)
+            assessLocation(systems().getLocationManager().getLastKnownLocation(LocationManager.NETWORK_PROVIDER));
+
+        ok = true;
+        Logger.i(this, "Location thread OK.");
+    }
+
+    @Override
+    protected void iteration()
+    {
+
+    }
+
+    @Override
+    protected void cleanup()
+    {
+        if (!ok)
+            return;
+        handler.post(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                systems().getLocationManager().removeUpdates(LocationThread.this);
+            }
+        });
+    }
+
+    //see: http://developer.android.com/guide/topics/location/strategies.html
+    protected boolean isBetterLocation(Location location, Location currentBestLocation)
+    {
+        if (location == null)
+            return false;
+
+        if (currentBestLocation == null)
+            return true;
+
+        long timeDelta = location.getTime() - currentBestLocation.getTime();
+        boolean isSignificantlyNewer = timeDelta > TWO_MINUTES;
+        boolean isSignificantlyOlder = timeDelta < -TWO_MINUTES;
+        boolean isNewer = timeDelta > 0;
+
+        if (isSignificantlyNewer)
+            return true;
+        else if (isSignificantlyOlder)
+            return false;
+
+        int accuracyDelta = (int) (location.getAccuracy() - currentBestLocation.getAccuracy());
+        boolean isLessAccurate = accuracyDelta > 0;
+        boolean isMoreAccurate = accuracyDelta < 0;
+        boolean isSignificantlyLessAccurate = accuracyDelta > 200;
+
+        boolean isFromSameProvider = isSameProvider(location.getProvider(),
+                currentBestLocation.getProvider());
+
+        // Determine location quality using a combination of timeliness and accuracy
+        if (isMoreAccurate)
+            return true;
+        else if (isNewer && !isLessAccurate)
+            return true;
+        else if (isNewer && !isSignificantlyLessAccurate && isFromSameProvider)
+            return true;
+        return false;
+    }
+
+    /** Checks whether two providers are the same */
+    private boolean isSameProvider(String provider1, String provider2)
+    {
+        if (provider1 == null)
+            return provider2 == null;
+        return provider1.equals(provider2);
+    }
+
+    private void assessLocation(Location newLoc)
+    {
+        if (isBetterLocation(newLoc, location))
+        {
+            location = newLoc;
+            MeshApplication.updateLocation(logContext(), location);
+        }
     }
 }
