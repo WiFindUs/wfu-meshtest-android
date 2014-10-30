@@ -137,6 +137,11 @@ public class MeshApplication extends Application
         return dirty;
     }
 
+    public static final void forceDirty()
+    {
+        dirty = true;
+    }
+
     public static final void clean(Context context)
     {
         if (!dirty)

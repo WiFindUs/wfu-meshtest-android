@@ -42,7 +42,7 @@ public class LogFragment extends BaseFragment
     public void onResume()
     {
         super.onResume();
-        logText.setText("");
+        clearLog();
         addLogItems(Logger.all());
         addLogItems(Logger.flush());
     }
@@ -50,6 +50,11 @@ public class LogFragment extends BaseFragment
     public void updateLogItems()
     {
         addLogItems(Logger.flush());
+    }
+
+    public void clearLog()
+    {
+        logText.setText("");
     }
 
     private void addLogItems(List<LoggerItem> items)
@@ -73,6 +78,11 @@ public class LogFragment extends BaseFragment
             sb.append("<br>\n");
         }
         logText.append(Html.fromHtml(sb.toString()));
-        logScroll.fullScroll(ScrollView.FOCUS_DOWN);
+        logScroll.post(new Runnable() {
+            @Override
+            public void run() {
+                logScroll.fullScroll(View.FOCUS_DOWN);
+            }
+        });
     }
 }

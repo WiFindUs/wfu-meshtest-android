@@ -82,7 +82,8 @@ public class MainActivity extends FragmentActivity
         registerReceiver(meshActivityReceiver, intentFilter);
 
         //create the background service
-        if (!getIntent().getBooleanExtra(MeshService.RESTORE_FROM_SERVICE,false))
+        //if (!getIntent().getBooleanExtra(MeshService.RESTORE_FROM_SERVICE,false))
+        if (MeshApplication.getMeshService() == null)
             startMeshService();
     }
 
@@ -118,6 +119,9 @@ public class MainActivity extends FragmentActivity
         else if (id == R.id.action_exit)
         {
             stopMeshService();
+            Logger.clear();
+            if (logFragment != null)
+                logFragment.clearLog();
             Intent intent = new Intent(Intent.ACTION_MAIN);
             intent.addCategory(Intent.CATEGORY_HOME);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

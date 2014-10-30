@@ -12,6 +12,7 @@ import com.wifindus.meshtester.meshservicethreads.BaseThread;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -61,6 +62,7 @@ public class UpdateThread extends BaseThread
         try
         {
             updateSocket = new DatagramSocket();
+            updateSocket.setBroadcast(true);
             Logger.i(this, "Updater thread OK.");
 
         }
@@ -79,7 +81,10 @@ public class UpdateThread extends BaseThread
             return;
 
         long time = System.currentTimeMillis();
-        if (!MeshApplication.isDirty() && (time - MeshApplication.lastCleaned()) < 30000)
+        if ((time - MeshApplication.lastCleaned()) >= 30000)
+            MeshApplication.forceDirty();
+
+        if (!MeshApplication.isDirty())
             return;
 
         //generate message content
@@ -106,11 +111,11 @@ public class UpdateThread extends BaseThread
         }
         catch (UnknownHostException e)
         {
-            e.printStackTrace();
+            Logger.e(this,"Update failed; %s unknown",WIFI_SERVER);
         }
         catch (IOException e)
         {
-            e.printStackTrace();
+            Logger.e(this, "Update failed; %s", e.toString());
         }
     }
 

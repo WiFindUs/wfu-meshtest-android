@@ -191,15 +191,30 @@ public abstract class Static
 
     public static final String formatTimer(long milliseconds)
     {
+        String suffix = "";
         if (milliseconds > 86400000) //days
-            return "" + (milliseconds /= 86400000) + " days";
+        {
+            milliseconds /= 86400000;
+            suffix = "day";
+        }
         else if (milliseconds > 3600000) //hours
-            return "" + (milliseconds /= 3600000) + " hours";
+        {
+            milliseconds /= 3600000;
+            suffix = "hour";
+        }
         else if (milliseconds > 60000) //minutes
-            return "" + (milliseconds /= 60000) + " minutes";
+        {
+            milliseconds /= 60000;
+            suffix = "minute";
+        }
         else if (milliseconds > 1000) //seconds
-            return "" + (milliseconds /= 1000) + " seconds";
-        return "" + milliseconds + " milliseconds";
+        {
+            milliseconds /= 1000;
+            suffix = "second";
+        }
+        else
+            suffix = "millisecond";
+        return "" + milliseconds + " " + suffix + (milliseconds > 1 ? "s" : "");
     }
 
     public static final void broadcastSimpleIntent(Context context, String action)

@@ -48,6 +48,12 @@ public class Logger
         return allItems;
     }
 
+    public static final void clear()
+    {
+        allItems.clear();
+        unsyncedItems.clear();
+    }
+
     public static final List<LoggerItem> flush()
     {
         ArrayList<LoggerItem> returnArray = new ArrayList<LoggerItem>();

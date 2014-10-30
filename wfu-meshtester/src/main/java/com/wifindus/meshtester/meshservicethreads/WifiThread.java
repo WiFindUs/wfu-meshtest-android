@@ -86,15 +86,12 @@ public class WifiThread extends BaseThread
     }
 
     @Override
-    protected void iteration()
-    {
+    protected void iteration() {
         //is wifi disabled?
-        if (!wifiManager.isWifiEnabled())
-        {
+        if (!wifiManager.isWifiEnabled()) {
             MeshApplication.updateMeshConnected(logContext(), false);
             wifiManager.setWifiEnabled(true);
-            if (state != STATE_WIFI_WAITING)
-            {
+            if (state != STATE_WIFI_WAITING) {
                 Logger.w(this, "WiFi disabled, re-enabling...");
                 state = STATE_WIFI_WAITING;
             }
@@ -104,8 +101,9 @@ public class WifiThread extends BaseThread
         //are we connected to a network already?
         activeNetwork = connectivityManager.getActiveNetworkInfo();
         if (activeNetwork == null
-            || activeNetwork.getType() != ConnectivityManager.TYPE_WIFI
-            || (wifiInfo = wifiManager.getConnectionInfo()).getSSID().compareTo(WIFI_SSID) != 0)
+                || activeNetwork.getType() != ConnectivityManager.TYPE_WIFI
+                || (wifiInfo = wifiManager.getConnectionInfo()).getSSID().compareTo(WIFI_SSID) != 0
+                )
         {
             MeshApplication.updateMeshConnected(logContext(), false);
             wifiManager.enableNetwork(getWifindusPublicID(), true);
