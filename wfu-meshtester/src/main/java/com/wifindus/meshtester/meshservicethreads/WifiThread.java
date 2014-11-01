@@ -106,7 +106,7 @@ public class WifiThread extends BaseThread
                 )
         {
             MeshApplication.updateMeshConnected(logContext(), false);
-            wifiManager.enableNetwork(getWifindusPublicID(), true);
+            wifiManager.enableNetwork(getWifindusPublicID(), false);
             wifiManager.reconnect();
 
             if (state != STATE_WIFI_CONNECTING)
@@ -158,7 +158,7 @@ public class WifiThread extends BaseThread
         {
             wifindus_public = new WifiConfiguration();
             wifindus_public.SSID = WIFI_SSID;
-            wifindus_public.priority = 1000;
+            wifindus_public.priority = 10000;
             wifindus_public.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
             wifindus_public.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
             wifindus_public.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
