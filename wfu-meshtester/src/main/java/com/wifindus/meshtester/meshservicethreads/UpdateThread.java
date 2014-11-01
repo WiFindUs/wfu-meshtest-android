@@ -52,7 +52,7 @@ public class UpdateThread extends BaseThread
     @Override
     protected long iterationInterval()
     {
-        return 3000;
+        return 1000;
     }
 
     @Override
@@ -81,7 +81,7 @@ public class UpdateThread extends BaseThread
             return;
 
         long time = System.currentTimeMillis();
-        if ((time - MeshApplication.lastCleaned()) >= 30000)
+        if ((time - MeshApplication.lastCleaned()) >= 10000)
             MeshApplication.forceDirty();
 
         if (!MeshApplication.isDirty())
