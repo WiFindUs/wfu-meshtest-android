@@ -106,7 +106,7 @@ public class WifiThread extends BaseThread
                 )
         {
             MeshApplication.updateMeshConnected(logContext(), false);
-            wifiManager.enableNetwork(getWifindusPublicID(), false);
+            wifiManager.enableNetwork(getWifindusPublicID(), true);
             wifiManager.reconnect();
 
             if (state != STATE_WIFI_CONNECTING)
