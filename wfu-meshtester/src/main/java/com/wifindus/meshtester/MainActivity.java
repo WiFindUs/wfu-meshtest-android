@@ -14,12 +14,11 @@ import android.support.v4.app.Fragment;
 import android.app.FragmentTransaction;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import com.wifindus.meshtester.fragments.LogFragment;
-import com.wifindus.meshtester.fragments.MapFragment;
+import com.wifindus.meshtester.fragments.UserFragment;
 import com.wifindus.meshtester.fragments.StatusFragment;
 import com.wifindus.meshtester.logs.LogSender;
 import com.wifindus.meshtester.logs.Logger;
@@ -28,13 +27,13 @@ import com.wifindus.meshtester.logs.Logger;
 public class MainActivity extends FragmentActivity
     implements ActionBar.TabListener, LogSender
 {
-    public static final int PAGE_STATUS = 0;
-    public static final int PAGE_MAP = 1;
+    public static final int PAGE_USER = 0;
+    public static final int PAGE_STATUS = 1;
     public static final int PAGE_LOG = 2;
     private static final String TAG = MainActivity.class.getName();
 
     private MeshActivityReceiver meshActivityReceiver = null;
-    private MapFragment mapFragment = null;
+    private UserFragment userFragment = null;
     private StatusFragment statusFragment = null;
     private LogFragment logFragment = null;
     private SectionsPagerAdapter sectionsPagerAdapter = null;
@@ -227,8 +226,8 @@ public class MainActivity extends FragmentActivity
         {
             switch (position)
             {
+                case PAGE_USER: return userFragment = new UserFragment();
                 case PAGE_STATUS: return statusFragment = new StatusFragment();
-                case PAGE_MAP: return mapFragment = new MapFragment();
                 case PAGE_LOG: return logFragment = new LogFragment();
             }
             return null;
@@ -245,10 +244,10 @@ public class MainActivity extends FragmentActivity
             Locale l = Locale.getDefault();
             switch (position)
             {
+                case PAGE_USER:
+                    return getString(R.string.title_user).toUpperCase(l);
                 case PAGE_STATUS:
                     return getString(R.string.title_status).toUpperCase(l);
-                case PAGE_MAP:
-                    return getString(R.string.title_map).toUpperCase(l);
                 case PAGE_LOG:
                     return getString(R.string.title_log).toUpperCase(l);
             }

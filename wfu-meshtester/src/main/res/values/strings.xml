@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">WiFindUs Mesh Tester</string>
+    <string name="app_name">WiFindUs Eye Client</string>
     <string name="title_log">Log</string>
+    <string name="title_user">User</string>
     <string name="title_map">Map</string>
     <string name="title_status">Status</string>
     <string name="action_settings">Settings</string>
@@ -11,6 +12,13 @@
     <string name="app_notification_subtext">Click to return to the app.</string>
     <string name="data_latlong">%1$f°, %2$f°</string>
     <string name="data_node">%1$d (%2$s)</string>
+
+    <!-- user page -->
+    <string name="user_current">Currently signed in:</string>
+    <string name="user_id">ID:</string>
+    <string name="user_name">Name:</string>
+    <string name="user_logout">Sign out</string>
+    <string name="user_login">Sign in</string>
 
     <!-- status page -->
     <string name="status_uptime">On since:</string>
