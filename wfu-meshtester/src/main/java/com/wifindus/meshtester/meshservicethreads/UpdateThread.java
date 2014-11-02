@@ -6,6 +6,7 @@ import android.location.Location;
 import android.util.Log;
 
 import com.wifindus.meshtester.MeshApplication;
+import com.wifindus.meshtester.Static;
 import com.wifindus.meshtester.logs.Logger;
 import com.wifindus.meshtester.meshservicethreads.BaseThread;
 
@@ -81,7 +82,7 @@ public class UpdateThread extends BaseThread
             return;
 
         long time = System.currentTimeMillis();
-        if ((time - MeshApplication.lastCleaned()) >= 10000)
+        if ((time - MeshApplication.lastCleaned()) >= 5000)
             MeshApplication.forceDirty();
 
         if (!MeshApplication.isDirty())
@@ -95,12 +96,12 @@ public class UpdateThread extends BaseThread
         Location loc = MeshApplication.getLocation();
 		if (loc != null)
 		{
-            message += "|latitude:" + loc.getLatitude();
-            message += "|longitude:" + loc.getLongitude();
+            message += "|latitude:" + Static.locationFormat.format(loc.getLatitude());
+            message += "|longitude:" + Static.locationFormat.format(loc.getLongitude());
             if (loc.hasAccuracy())
                 message += "|accuracy:" + loc.getAccuracy();
-            if (loc.hasAltitude())
-                message += "|altitude:" + loc.getAccuracy();
+            //if (loc.hasAltitude())
+                //message += "|altitude:" + loc.getAccuracy();
 		}
 
         try
