@@ -79,11 +79,9 @@ public class LocationThread extends BaseThread implements LocationListener
     @Override
     protected long iterationInterval()
     {
-        if (!hasGPS) //phone location only
+        if (!hasGPS)
             return 10000;
-        else if (!hasNetworkLocation) //GPS location only
-            return 5000;
-        return 2500; //both
+        return 1000;
     }
 
     @Override
@@ -94,8 +92,7 @@ public class LocationThread extends BaseThread implements LocationListener
         handler = new Handler(Looper.getMainLooper());
         hasLocation = systems().getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION);
         hasGPS = systems().getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS);
-        hasNetworkLocation = systems().getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION_NETWORK);
-        if (!hasLocation || !(hasGPS || hasNetworkLocation))
+        if (!hasLocation || !hasGPS)
         {
             Logger.e(this, "Missing location packages!");
             cancelThread();
@@ -123,12 +120,7 @@ public class LocationThread extends BaseThread implements LocationListener
                 );
             }
         });
-
-        if (hasGPS)
-            assessLocation(systems().getLocationManager().getLastKnownLocation(LocationManager.GPS_PROVIDER));
-        if (hasNetworkLocation)
-            assessLocation(systems().getLocationManager().getLastKnownLocation(LocationManager.NETWORK_PROVIDER));
-
+        assessLocation(systems().getLocationManager().getLastKnownLocation(LocationManager.GPS_PROVIDER));
         ok = true;
         Logger.i(this, "Location thread OK.");
     }
@@ -136,7 +128,7 @@ public class LocationThread extends BaseThread implements LocationListener
     @Override
     protected void iteration()
     {
-
+        assessLocation(systems().getLocationManager().getLastKnownLocation(LocationManager.GPS_PROVIDER));
     }
 
     @Override
@@ -144,6 +136,7 @@ public class LocationThread extends BaseThread implements LocationListener
     {
         if (!ok)
             return;
+
         handler.post(new Runnable()
         {
             @Override
