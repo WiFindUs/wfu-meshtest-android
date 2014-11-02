@@ -114,6 +114,10 @@ public class UpdateThread extends BaseThread
         {
             Logger.e(this,"Update failed; %s unknown",WIFI_SERVER);
         }
+        catch (SocketException e)
+        {
+            Logger.e(this, "Update failed; SocketException thrown", e.toString());
+        }
         catch (IOException e)
         {
             Logger.e(this, "Update failed; %s", e.toString());
