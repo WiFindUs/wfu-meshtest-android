@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
+import android.os.Build;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
@@ -24,7 +25,7 @@ import java.util.Random;
 public abstract class Static
 {
     public static final Random random = new Random();
-    public static final DecimalFormat locationFormat = new DecimalFormat("#.######");
+    public static final DecimalFormat locationFormat = new DecimalFormat("#.########");
 
     /**
      * Detect if the system's Airplane mode is turned on.
@@ -33,7 +34,16 @@ public abstract class Static
      */
     public final static boolean isAirplaneModeOn(final Context context)
     {
-        return Settings.Global.getInt(context.getContentResolver(), Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1)
+        {
+            return Settings.System.getInt(context.getContentResolver(),
+                    Settings.System.AIRPLANE_MODE_ON, 0) != 0;
+        }
+        else
+        {
+            return Settings.Global.getInt(context.getContentResolver(),
+                    Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
+        }
     }
 
     public final static void setMobileDataEnabled(final ConnectivityManager connectivityManager, boolean enabled)

@@ -6,13 +6,14 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.IBinder;
 
 import com.wifindus.meshtester.logs.LogSender;
 import com.wifindus.meshtester.logs.Logger;
-import com.wifindus.meshtester.meshservicethreads.LocationThread;
-import com.wifindus.meshtester.meshservicethreads.UpdateThread;
-import com.wifindus.meshtester.meshservicethreads.WifiThread;
+import com.wifindus.meshtester.threads.LocationThread;
+import com.wifindus.meshtester.threads.UpdateThread;
+import com.wifindus.meshtester.threads.WifiThread;
 
 public class MeshService extends Service implements LogSender
 {
@@ -51,9 +52,14 @@ public class MeshService extends Service implements LogSender
             .setOngoing(true)
             .setAutoCancel(false)
             .setContentIntent(pendingIntent)
-            .setLights(Color.MAGENTA, 200, 3000)
-            .setSubText(getString(R.string.app_notification_subtext));
-        Notification notification = builder.build();
+            .setLights(Color.MAGENTA, 200, 3000);
+        Notification notification = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            builder.setSubText(getString(R.string.app_notification_subtext));
+            notification = builder.build();
+        }
+        else
+            notification = builder.getNotification();
         notification.flags |= Notification.FLAG_NO_CLEAR;
 
         //set foreground
