@@ -1,4 +1,4 @@
-package com.wifindus.meshtester.meshservicethreads;
+package com.wifindus.meshtester.threads;
 
 /**
  * Created by marzer on 25/04/2014.

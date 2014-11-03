@@ -1,4 +1,4 @@
-package com.wifindus.meshtester.meshservicethreads;
+package com.wifindus.meshtester.threads;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -7,14 +7,10 @@ import android.net.NetworkInfo;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.os.Handler;
-import android.util.Log;
 
 import com.wifindus.meshtester.MeshApplication;
 import com.wifindus.meshtester.logs.Logger;
-import com.wifindus.meshtester.meshservicethreads.BaseThread;
 
-import java.net.InetAddress;
 import java.util.List;
 
 /**

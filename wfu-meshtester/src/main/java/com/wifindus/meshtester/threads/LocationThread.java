@@ -1,4 +1,4 @@
-package com.wifindus.meshtester.meshservicethreads;
+package com.wifindus.meshtester.threads;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -9,11 +9,9 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 
 import com.wifindus.meshtester.MeshApplication;
 import com.wifindus.meshtester.logs.Logger;
-import com.wifindus.meshtester.meshservicethreads.BaseThread;
 
 /**
  * Created by marzer on 25/04/2014.

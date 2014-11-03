@@ -1,4 +1,4 @@
-package com.wifindus.meshtester.meshservicethreads;
+package com.wifindus.meshtester.threads;
 
 import android.content.Context;
 

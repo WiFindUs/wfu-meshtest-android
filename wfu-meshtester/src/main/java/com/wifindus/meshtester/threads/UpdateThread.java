@@ -1,19 +1,15 @@
-package com.wifindus.meshtester.meshservicethreads;
+package com.wifindus.meshtester.threads;
 
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.location.Location;
-import android.util.Log;
 
 import com.wifindus.meshtester.MeshApplication;
 import com.wifindus.meshtester.Static;
 import com.wifindus.meshtester.logs.Logger;
-import com.wifindus.meshtester.meshservicethreads.BaseThread;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -90,18 +86,19 @@ public class UpdateThread extends BaseThread
 
         //generate message content
         String message = "hash:" + MeshApplication.getHash()
-            + "|timestamp:" + time
-			+ "|type:DEVICE"
-			+ "|deviceType:PHO";
+            + "|ts:" + time
+			+ "|ty:DEVICE"
+			+ "|dt:" + MeshApplication.getDeviceType()
+            + "|user:" + MeshApplication.getUserID();
         Location loc = MeshApplication.getLocation();
 		if (loc != null)
 		{
-            message += "|latitude:" + Static.locationFormat.format(loc.getLatitude());
-            message += "|longitude:" + Static.locationFormat.format(loc.getLongitude());
+            message += "|lat:" + Static.locationFormat.format(loc.getLatitude());
+            message += "|long:" + Static.locationFormat.format(loc.getLongitude());
             if (loc.hasAccuracy())
-                message += "|accuracy:" + loc.getAccuracy();
-            //if (loc.hasAltitude())
-                //message += "|altitude:" + loc.getAccuracy();
+                message += "|acc:" + loc.getAccuracy();
+            if (loc.hasAltitude())
+                message += "|alt:" + loc.getAccuracy();
 		}
 
         try
