@@ -20,6 +20,7 @@ public class StatusFragment extends BaseFragment
     private TextView connectionState, connectedSince, meshAddress,
             node, nodeAddress, hash, uptime, location, lastCleaned;
     private Handler timerHandler = new Handler();
+    private static final String TAG = StatusFragment.class.getName();
 
     public StatusFragment()
     {
@@ -85,6 +86,11 @@ public class StatusFragment extends BaseFragment
                 loc.getLatitude(),loc.getLongitude()) : "");
 
         updateUptime();
+    }
+
+    @Override
+    public String logTag(){
+        return TAG;
     }
 
     private void updateUptime()

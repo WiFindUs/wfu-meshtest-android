@@ -23,6 +23,7 @@ public class LogFragment extends BaseFragment
     private TextView logText = null;
     private ScrollView logScroll = null;
     private static final Pattern PATTERN_OK = Pattern.compile("\\b(OK)\\b",Pattern.CASE_INSENSITIVE);
+    private static final String TAG = LogFragment.class.getName();
 
     public LogFragment()
     {
@@ -84,5 +85,10 @@ public class LogFragment extends BaseFragment
                 logScroll.fullScroll(View.FOCUS_DOWN);
             }
         });
+    }
+
+    @Override
+    public String logTag(){
+        return TAG;
     }
 }
