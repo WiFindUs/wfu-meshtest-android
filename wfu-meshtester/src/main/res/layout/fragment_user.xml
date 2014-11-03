@@ -12,7 +12,7 @@
         android:text="@string/user_current"
         android:textStyle="bold"
         android:layout_width="match_parent"
-        android:textColor="@android:color/holo_blue_light"
+        android:textColor="@color/holo_blue_light"
         android:layout_marginBottom="10dp" />
 
     <LinearLayout
@@ -36,7 +36,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="1"
+        android:text=""
         android:id="@+id/field_user_id"/>
     </LinearLayout>
 
@@ -61,7 +61,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Mark Gillard"
+            android:text=""
             android:id="@+id/field_user_name"/>
     </LinearLayout>
 
@@ -85,7 +85,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="7:05 am"
+            android:text=""
             android:id="@+id/field_user_since"
             />
     </LinearLayout>
@@ -93,11 +93,10 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/user_logout"
+        android:text="@string/user_login"
         android:id="@+id/user_change_button"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="10dp"
-        android:paddingLeft="40dp"
-        android:paddingRight="40dp"/>
+        android:minWidth="150dp" />
 
 </LinearLayout>

@@ -78,6 +78,7 @@ public class MainActivity extends FragmentActivity
         intentFilter.addAction(MeshApplication.ACTION_UPDATE_LOCATION);
         intentFilter.addAction(MeshApplication.ACTION_UPDATE_MESH_ADDRESS);
         intentFilter.addAction(MeshApplication.ACTION_UPDATE_CLEANED);
+        intentFilter.addAction(MeshApplication.ACTION_UPDATE_USER);
         registerReceiver(meshActivityReceiver, intentFilter);
 
         //create the background service
