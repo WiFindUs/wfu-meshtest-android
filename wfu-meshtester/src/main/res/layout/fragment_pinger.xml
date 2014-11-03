@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="10dp"
+    >
+
+    <TextView
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="@string/ping_controls"
+        android:textStyle="bold"
+        android:layout_width="match_parent"
+        android:textColor="@color/holo_blue_light"
+        android:layout_marginBottom="10dp" />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/ping_range"
+            android:textStyle="bold"
+            android:layout_marginRight="10dp"
+            android:minWidth="110dp"
+            android:gravity="right"
+            />
+
+        <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/field_node_range"
+            android:text="1-5"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="@string/ping_range_example"
+        android:layout_width="match_parent"
+        android:gravity="right"
+        android:layout_marginBottom="10dp"
+        android:textStyle="italic" />
+
+
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/ping_start"
+        android:id="@+id/start_stop_button"
+        android:layout_gravity="center_horizontal"
+        android:minWidth="150dp"
+        android:layout_marginTop="10dp"/>
+
+    <TextView
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="@string/ping_results"
+        android:textStyle="bold"
+        android:layout_width="match_parent"
+        android:textColor="@color/holo_blue_light" />
+
+    <ScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/scroll"
+        android:background="@android:color/transparent"
+        android:layout_marginTop="5dp"
+        android:layout_marginLeft="5dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:id="@+id/text"
+            android:typeface="monospace" />
+
+    </ScrollView>
+
+
+
+
+
+
+</LinearLayout>

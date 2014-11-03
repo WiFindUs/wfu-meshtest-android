@@ -34,8 +34,8 @@ public class LogFragment extends BaseFragment
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
     {
         View view = inflater.inflate(R.layout.fragment_log, container, false);
-        logText = (TextView)view.findViewById(R.id.log_text);
-        logScroll = (ScrollView)view.findViewById(R.id.log_scroll);
+        logText = (TextView)view.findViewById(R.id.text);
+        logScroll = (ScrollView)view.findViewById(R.id.scroll);
         return view;
     }
 
@@ -45,10 +45,11 @@ public class LogFragment extends BaseFragment
         super.onResume();
         clearLog();
         addLogItems(Logger.all());
-        addLogItems(Logger.flush());
+        update();
     }
 
-    public void updateLogItems()
+    @Override
+    public void update()
     {
         addLogItems(Logger.flush());
     }

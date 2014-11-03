@@ -22,4 +22,6 @@ public abstract class BaseFragment extends Fragment implements LogSender
     }
 
     public Context logContext() { return this.getActivity(); }
+
+    public abstract void update();
 }

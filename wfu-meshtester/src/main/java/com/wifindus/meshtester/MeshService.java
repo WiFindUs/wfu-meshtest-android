@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.IBinder;
@@ -12,13 +13,14 @@ import android.os.IBinder;
 import com.wifindus.meshtester.logs.LogSender;
 import com.wifindus.meshtester.logs.Logger;
 import com.wifindus.meshtester.threads.LocationThread;
+import com.wifindus.meshtester.threads.PingThread;
 import com.wifindus.meshtester.threads.UpdateThread;
 import com.wifindus.meshtester.threads.WifiThread;
 
 public class MeshService extends Service implements LogSender
 {
     public static final String RESTORE_FROM_SERVICE = "RESTORE_FROM_SERVICE";
-    private static final String TAG = UpdateThread.class.getName();
+    private static final String TAG = MeshService.class.getName();
     private volatile WifiThread wifiThread = null;
     private volatile LocationThread locationThread = null;
     private volatile UpdateThread updateThread = null;
@@ -90,6 +92,7 @@ public class MeshService extends Service implements LogSender
         updateThread.cancelThread();
         locationThread.cancelThread();
         wifiThread.cancelThread();
+        MeshApplication.stopPingThread(this);
         MeshApplication.setMeshService(null);
         Logger.i(this, "Service stopped.");
         stopForeground(true);

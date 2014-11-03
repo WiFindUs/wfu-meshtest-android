@@ -18,11 +18,10 @@ import com.wifindus.meshtester.logs.Logger;
  */
 public class LocationThread extends BaseThread implements LocationListener
 {
-    private static final String TAG = UpdateThread.class.getName();
+    private static final String TAG = LocationThread.class.getName();
     private static final int TWO_MINUTES = 1000 * 60 * 2;
     private boolean hasLocation = false;
     private boolean hasGPS = false;
-    private boolean hasNetworkLocation = false;
     private Handler handler = null;
     private boolean ok = false;
     private Location location = null;

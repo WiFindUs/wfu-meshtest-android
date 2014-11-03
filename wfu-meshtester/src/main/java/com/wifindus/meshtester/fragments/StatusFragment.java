@@ -47,7 +47,7 @@ public class StatusFragment extends BaseFragment
     public void onResume()
     {
         super.onResume();
-        updateStatusItems();
+        update();
         timerHandler.postDelayed(timerRunnable, 1000);
     }
 
@@ -58,7 +58,8 @@ public class StatusFragment extends BaseFragment
         timerHandler.removeCallbacks(timerRunnable);
     }
 
-    public void updateStatusItems()
+    @Override
+    public void update()
     {
         hash.setText(MeshApplication.getHash());
         if (MeshApplication.isMeshConnected())

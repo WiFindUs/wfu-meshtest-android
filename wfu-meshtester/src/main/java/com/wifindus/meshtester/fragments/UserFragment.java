@@ -45,7 +45,7 @@ public class UserFragment extends BaseFragment  {
     public void onResume()
     {
         super.onResume();
-        updateUserItems();
+        update();
         timerHandler.postDelayed(timerRunnable, 1000);
     }
 
@@ -56,7 +56,8 @@ public class UserFragment extends BaseFragment  {
         timerHandler.removeCallbacks(timerRunnable);
     }
 
-    public void updateUserItems()
+    @Override
+    public void update()
     {
         int userID = MeshApplication.getUserID();
         id.setText(userID >= 0 ? Integer.toString(MeshApplication.getUserID()) : getResources().getString(R.string.user_no_id));
@@ -69,55 +70,55 @@ public class UserFragment extends BaseFragment  {
         @Override
         public void onClick(View view)
         {
-            if (view == signInOutButton)
+            if (view != signInOutButton)
+                return;
+
+            if (MeshApplication.getUserID() >= 0)
             {
-                if (MeshApplication.getUserID() >= 0)
-                {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(UserFragment.this.getActivity());
-                    builder.setMessage(R.string.user_really_logout)
-                        .setPositiveButton(android.R.string.yes,  new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface di, int i) {
-                                MeshApplication.updateUser(UserFragment.this.getActivity(),-1);
-                                updateUserItems();
+                AlertDialog.Builder builder = new AlertDialog.Builder(UserFragment.this.getActivity());
+                builder.setMessage(R.string.user_really_logout)
+                    .setPositiveButton(android.R.string.yes,  new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface di, int i) {
+                            MeshApplication.updateUser(UserFragment.this.getActivity(),-1);
+                            update();
+                            Toast.makeText(UserFragment.this.getActivity(),
+                                getResources().getString(R.string.user_logout_ok_toast),
+                                Toast.LENGTH_LONG).show();
+                        }
+                    })
+                    .setNegativeButton(android.R.string.no, null)
+                    .show();
+            }
+            else //signing in
+            {
+                //create text edit box
+                final EditText text = new EditText(UserFragment.this.getActivity());
+                text.setRawInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_NORMAL);
+                text.setFilters(new InputFilter[] {new InputFilter.LengthFilter(8)});
+
+                //build the dialog
+                AlertDialog.Builder builder = new AlertDialog.Builder(UserFragment.this.getActivity());
+                builder.setTitle(R.string.user_login)
+                    .setMessage(R.string.user_id_help_text)
+                    .setView(text)
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface di, int i) {
+
+                            int userID = -1;
+                            try {
+                                userID = Integer.parseInt(text.getText().toString().trim());
+                            } catch (NumberFormatException ex) {
+                            }
+                            MeshApplication.updateUser(UserFragment.this.getActivity(), userID);
+                            update();
+                            if (userID > -1)
                                 Toast.makeText(UserFragment.this.getActivity(),
-                                    getResources().getString(R.string.user_logout_ok_toast),
-                                    Toast.LENGTH_LONG).show();
-                            }
-                        })
-                        .setNegativeButton(android.R.string.no, null)
-                        .show();
-                }
-                else //signing in
-                {
-                    //create text edit box
-                    final EditText text = new EditText(UserFragment.this.getActivity());
-                    text.setRawInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_NORMAL);
-                    text.setFilters(new InputFilter[] {new InputFilter.LengthFilter(8)});
-
-                    //build the dialog
-                    AlertDialog.Builder builder = new AlertDialog.Builder(UserFragment.this.getActivity());
-                    builder.setTitle(R.string.user_login)
-                        .setMessage(R.string.user_id_help_text)
-                        .setView(text)
-                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface di, int i) {
-
-                                int userID = -1;
-                                try {
-                                    userID = Integer.parseInt(text.getText().toString().trim());
-                                } catch (NumberFormatException ex) {
-                                }
-                                MeshApplication.updateUser(UserFragment.this.getActivity(), userID);
-                                updateUserItems();
-                                if (userID > -1)
-                                    Toast.makeText(UserFragment.this.getActivity(),
-                                            getResources().getString(R.string.user_login_ok_toast, userID),
-                                            Toast.LENGTH_LONG).show();
-                            }
-                        })
-                        .setNegativeButton(android.R.string.cancel, null)
-                        .show();
-                }
+                                        getResources().getString(R.string.user_login_ok_toast, userID),
+                                        Toast.LENGTH_LONG).show();
+                        }
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
             }
         }
     };

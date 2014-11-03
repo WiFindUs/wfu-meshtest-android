@@ -9,9 +9,11 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.lang.reflect.Field;
@@ -236,5 +238,21 @@ public abstract class Static
         Intent intent = new Intent();
         intent.setAction(action);
         context.sendBroadcast(intent);
+    }
+
+    public static final String ping(String address) throws IOException
+    {
+        Process process = Runtime.getRuntime().exec(
+                "/system/bin/ping -c 10 -i 0.2 -n -q " + address);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(
+                process.getInputStream()));
+        int i;
+        char[] buffer = new char[4096];
+        StringBuffer output = new StringBuffer();
+        while ((i = reader.read(buffer)) > 0)
+            output.append(buffer, 0, i);
+        reader.close();
+
+        return output.toString();
     }
 }

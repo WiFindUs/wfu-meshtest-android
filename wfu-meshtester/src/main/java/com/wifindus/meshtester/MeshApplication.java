@@ -8,10 +8,14 @@ import android.location.Location;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
+import com.wifindus.MathHelper;
+import com.wifindus.PingResult;
 import com.wifindus.meshtester.logs.Logger;
+import com.wifindus.meshtester.threads.PingThread;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,6 +32,7 @@ public class MeshApplication extends Application
     public static final String ACTION_UPDATE_CONNECTION_STATE = MeshApplication.ACTION_PREFIX + "UPDATE_CONNECTION_STATE";
     public static final String ACTION_UPDATE_CLEANED = MeshApplication.ACTION_PREFIX + "UPDATE_CLEANED";
     public static final String ACTION_UPDATE_USER = MeshApplication.ACTION_PREFIX + "UPDATE_USER";
+    public static final String ACTION_UPDATE_PINGS = MeshApplication.ACTION_PREFIX + "UPDATE_PINGS";
 
     private static volatile MeshService meshService = null;
     private static volatile SystemManager systemManager =  null;
@@ -42,7 +47,8 @@ public class MeshApplication extends Application
     private static volatile String hash = null;
     private static volatile int userID = -1;
     private static volatile long lastSignInTime = 0;
-    private static volatile ConcurrentHashMap<Integer, String> userNames = new ConcurrentHashMap<Integer, String>();
+    private static volatile ConcurrentHashMap<Integer, String> userNames
+        = new ConcurrentHashMap<Integer, String>();
 
     //mesh status
     private static volatile boolean meshConnected = false;
@@ -52,6 +58,11 @@ public class MeshApplication extends Application
     private static volatile String meshHostName = "";
     private static volatile int meshNodeNumber = 0;
     private static volatile String meshNodeHash = "";
+
+    //pings
+    private static volatile PingThread pingThread = null;
+    private static volatile ConcurrentHashMap<Integer, PingResult> nodePings
+        = new ConcurrentHashMap<Integer, PingResult>();
 
     /////////////////////////////////////////////////////////////////////
     // CONSTRUCTORS
@@ -170,6 +181,11 @@ public class MeshApplication extends Application
         return name == null ? "" : name;
     }
 
+    public static final ConcurrentHashMap<Integer, PingResult> getNodePings()
+    {
+        return nodePings;
+    }
+
     public static final boolean isDirty()
     {
         return dirty;
@@ -276,6 +292,48 @@ public class MeshApplication extends Application
         }
 
         Static.broadcastSimpleIntent(context, ACTION_UPDATE_MESH_ADDRESS);
+    }
+
+    public static void updateNodePing(Context context, int node, PingResult newResult)
+    {
+        PingResult currentResult = nodePings.get(Integer.valueOf(node));
+        if (currentResult == null && newResult == null)
+            return;
+        nodePings.put(Integer.valueOf(node), newResult);
+        Static.broadcastSimpleIntent(context, ACTION_UPDATE_PINGS);
+    }
+
+    public static boolean isPingThreadRunning()
+    {
+        return pingThread != null;
+    }
+
+    public static void startPingThread(Context context, String nodeRange)
+    {
+        if (isPingThreadRunning())
+            return;
+        pingThread = new PingThread(context,nodeRange);
+        if (pingThread.getNodeCount() == 0)
+            pingThread = null;
+        else
+        {
+            nodePings.clear();
+            for (int i = 0; i < pingThread.getNodeCount(); i++)
+                nodePings.put(Integer.valueOf(pingThread.getNodeNumber(i)), PingResult.WAITING);
+            pingThread.start();
+            if (context != null)
+                Static.broadcastSimpleIntent(context, MeshApplication.ACTION_UPDATE_PINGS);
+        }
+    }
+
+    public static void stopPingThread(Context context)
+    {
+        if (!isPingThreadRunning())
+            return;
+        pingThread.cancelThread();
+        pingThread = null;
+        if (context != null)
+            Static.broadcastSimpleIntent(context, MeshApplication.ACTION_UPDATE_PINGS);
     }
 }
 

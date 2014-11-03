@@ -18,6 +18,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.wifindus.meshtester.fragments.LogFragment;
+import com.wifindus.meshtester.fragments.PingFragment;
 import com.wifindus.meshtester.fragments.UserFragment;
 import com.wifindus.meshtester.fragments.StatusFragment;
 import com.wifindus.meshtester.logs.LogSender;
@@ -29,13 +30,15 @@ public class MainActivity extends FragmentActivity
 {
     public static final int PAGE_USER = 0;
     public static final int PAGE_STATUS = 1;
-    public static final int PAGE_LOG = 2;
+    public static final int PAGE_PING = 2;
+    public static final int PAGE_LOG = 3;
     private static final String TAG = MainActivity.class.getName();
 
     private MeshActivityReceiver meshActivityReceiver = null;
     private UserFragment userFragment = null;
     private StatusFragment statusFragment = null;
     private LogFragment logFragment = null;
+    private PingFragment pingFragment = null;
     private SectionsPagerAdapter sectionsPagerAdapter = null;
     private ViewPager viewPager = null;
 
@@ -79,10 +82,10 @@ public class MainActivity extends FragmentActivity
         intentFilter.addAction(MeshApplication.ACTION_UPDATE_MESH_ADDRESS);
         intentFilter.addAction(MeshApplication.ACTION_UPDATE_CLEANED);
         intentFilter.addAction(MeshApplication.ACTION_UPDATE_USER);
+        intentFilter.addAction(MeshApplication.ACTION_UPDATE_PINGS);
         registerReceiver(meshActivityReceiver, intentFilter);
 
         //create the background service
-        //if (!getIntent().getBooleanExtra(MeshService.RESTORE_FROM_SERVICE,false))
         if (MeshApplication.getMeshService() == null)
             startMeshService();
     }
@@ -199,7 +202,7 @@ public class MainActivity extends FragmentActivity
             if (arg1.getAction().equals(Logger.ACTION_UPDATE_LOG))
             {
                 if (logFragment != null)
-                    logFragment.updateLogItems();
+                    logFragment.update();
             }
             else if (arg1.getAction().equals(MeshApplication.ACTION_UPDATE_CONNECTION_STATE)
              || arg1.getAction().equals(MeshApplication.ACTION_UPDATE_LOCATION)
@@ -207,7 +210,12 @@ public class MainActivity extends FragmentActivity
              || arg1.getAction().equals(MeshApplication.ACTION_UPDATE_CLEANED))
             {
                 if (statusFragment != null)
-                    statusFragment.updateStatusItems();
+                    statusFragment.update();
+            }
+            else if (arg1.getAction().equals(MeshApplication.ACTION_UPDATE_PINGS))
+            {
+                if (pingFragment != null)
+                    pingFragment.update();
             }
         }
     }
@@ -229,6 +237,7 @@ public class MainActivity extends FragmentActivity
             {
                 case PAGE_USER: return userFragment = new UserFragment();
                 case PAGE_STATUS: return statusFragment = new StatusFragment();
+                case PAGE_PING: return pingFragment = new PingFragment();
                 case PAGE_LOG: return logFragment = new LogFragment();
             }
             return null;
@@ -236,8 +245,7 @@ public class MainActivity extends FragmentActivity
 
         @Override
         public int getCount() {
-            // Show 3 total pages.
-            return 3;
+            return 4;
         }
 
         @Override
@@ -251,6 +259,8 @@ public class MainActivity extends FragmentActivity
                     return getString(R.string.title_status).toUpperCase(l);
                 case PAGE_LOG:
                     return getString(R.string.title_log).toUpperCase(l);
+                case PAGE_PING:
+                    return getString(R.string.title_ping).toUpperCase(l);
             }
             return null;
         }
