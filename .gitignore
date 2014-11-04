@@ -220,3 +220,6 @@ pip-log.txt
 #Mr Developer
 .mr.developer.cfg
 wfu-meshtester/wfu-meshtester-release.apk
+.idea/libraries/support_v13_19_1_0.xml
+.idea/libraries/support_v4_19_1_0.xml
+wfu-meshtester/build.gradle
