@@ -1,6 +1,7 @@
 package com.wifindus.meshtester.threads;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.location.Location;
 
 import com.wifindus.meshtester.MeshApplication;
@@ -23,6 +24,7 @@ public class UpdateThread extends BaseThread
     private volatile DatagramSocket updateSocket;
     private static final String WIFI_SERVER = "192.168.1.1";
     private static final int WIFI_SERVER_PORT = 33339;
+    private static String versionString;
 
     /////////////////////////////////////////////////////////////////////
     // CONSTRUCTORS
@@ -31,6 +33,13 @@ public class UpdateThread extends BaseThread
     public UpdateThread(Context launchingContext)
     {
         super(launchingContext);
+        try {
+            versionString = MeshApplication.systems().getPackageManager()
+                    .getPackageInfo(launchingContext.getPackageName(), 0).versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            versionString = "NULL";
+        }
+
     }
 
     /////////////////////////////////////////////////////////////////////
@@ -89,7 +98,9 @@ public class UpdateThread extends BaseThread
             + "|ts:" + time
 			+ "|ty:DEVICE"
 			+ "|dt:" + MeshApplication.getDeviceType()
-            + "|user:" + MeshApplication.getUserID();
+            + "|user:" + MeshApplication.getUserID()
+            + "|ver:" + versionString
+            + "|sdk:" + android.os.Build.VERSION.SDK_INT;
         Location loc = MeshApplication.getLocation();
 		if (loc != null)
 		{
