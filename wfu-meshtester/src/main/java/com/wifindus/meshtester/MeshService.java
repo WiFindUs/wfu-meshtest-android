@@ -3,10 +3,12 @@ package com.wifindus.meshtester;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.IBinder;
 
@@ -25,6 +27,7 @@ public class MeshService extends Service implements LogSender
     private volatile LocationThread locationThread = null;
     private volatile UpdateThread updateThread = null;
     private volatile boolean ready = false;
+	private volatile MeshServiceReceiver meshServiceReceiver = null;
 
     public MeshService()
     {
@@ -70,6 +73,12 @@ public class MeshService extends Service implements LogSender
         //attach to application
         MeshApplication.setMeshService(this);
 
+		//set up the broadcast receiver
+		meshServiceReceiver = new MeshServiceReceiver();
+		IntentFilter intentFilter = new IntentFilter();
+		intentFilter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
+		registerReceiver(meshServiceReceiver, intentFilter);
+
         //start threads
         wifiThread = new WifiThread(this);
         wifiThread.start();
@@ -89,7 +98,8 @@ public class MeshService extends Service implements LogSender
     @Override
     public void onDestroy()
     {
-        updateThread.cancelThread();
+        unregisterReceiver(meshServiceReceiver);
+		updateThread.cancelThread();
         locationThread.cancelThread();
         wifiThread.cancelThread();
         MeshApplication.stopPingThread(this);
@@ -114,4 +124,17 @@ public class MeshService extends Service implements LogSender
     {
         return this;
     }
+
+	private class MeshServiceReceiver extends BroadcastReceiver
+	{
+		@Override
+		public void onReceive(Context arg0, Intent arg1)
+		{
+			if (arg1.getAction().equals(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION))
+			{
+				if (wifiThread != null)
+					wifiThread.newScanResultsAvailable();
+			}
+		}
+	}
 }
