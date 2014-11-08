@@ -218,7 +218,8 @@ public class MeshApplication extends Application
         boolean changed = false;
         if (loc != null && location != null)
         {
-            if (!location.equals(loc))
+            if (!MathHelper.equal(location.getLatitude(),loc.getLatitude())
+				|| !MathHelper.equal(location.getLongitude(),loc.getLongitude()))
                 changed = true;
         }
         else
