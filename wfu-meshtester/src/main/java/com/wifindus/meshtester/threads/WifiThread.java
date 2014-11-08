@@ -249,6 +249,7 @@ public class WifiThread extends BaseThread
 				MeshApplication.updateMeshConnected(logContext(), false);
 				return;
 			}
+			wifiInfo = wifiManager.getConnectionInfo();
 		}
 		Logger.i(this, "Connected to mesh OK.");
 		MeshApplication.updateMeshAddress(logContext(), wifiInfo.getIpAddress());
