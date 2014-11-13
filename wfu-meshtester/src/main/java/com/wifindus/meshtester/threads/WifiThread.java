@@ -81,49 +81,6 @@ public class WifiThread extends BaseThread
         }
         wifiManager = systems().getWifiManager();
 
-		//aquire wifi lock
-		Logger.i(this, "Aquiring WiFi lock...");
-        wifiLock = wifiManager.createWifiLock(WIFI_LOCK_TAG);
-        wifiLock.acquire();
-
-		//create/identify WFU network configuration
-		Logger.i(this, "Creating WiFindUs network profile...");
-		List<WifiConfiguration> items = wifiManager.getConfiguredNetworks();
-		boolean isNew = false;
-		for (WifiConfiguration item : items)
-		{
-			if (item.SSID.compareTo("\"" + WIFI_SSID + "\"") == 0)
-			{
-				wifindus_public = item;
-				break;
-			}
-		}
-		if (wifindus_public == null)
-		{
-			wifindus_public = new WifiConfiguration();
-			isNew = true;
-		}
-		wifindus_public.SSID = "\"" + WIFI_SSID + "\"";
-		wifindus_public.preSharedKey = "\"" + WIFI_PSK + "\"";
-		wifindus_public.status = WifiConfiguration.Status.ENABLED;
-		wifindus_public.hiddenSSID = true;
-		wifindus_public.priority = 99999;
-		wifindus_public.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
-		wifindus_public.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
-		wifindus_public.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
-		wifindus_public.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
-		wifindus_public.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
-		wifindus_public.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
-		wifindus_public.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
-		wifindus_public.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-		wifindus_public.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
-		wifindus_public.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
-		if (isNew)
-			wifiManager.addNetwork(wifindus_public);
-		else
-			wifiManager.updateNetwork(wifindus_public);
-		wifiManager.saveConfiguration();
-
 		Logger.i(this, "WiFi thread OK.");
     }
 
@@ -158,6 +115,61 @@ public class WifiThread extends BaseThread
 		if (isCancelled())
 			return;
 
+		//aquire wifi lock
+		if (wifiLock == null)
+		{
+			Logger.i(this, "Aquiring WiFi lock...");
+			wifiLock = wifiManager.createWifiLock(WIFI_LOCK_TAG);
+			wifiLock.acquire();
+		}
+
+		if (isCancelled())
+			return;
+
+		//create/identify WFU network configuration
+		if (wifindus_public == null)
+		{
+			Logger.i(this, "Creating WiFindUs network profile...");
+			List<WifiConfiguration> items = wifiManager.getConfiguredNetworks();
+			boolean isNew = false;
+			for (WifiConfiguration item : items)
+			{
+				if (item.SSID.compareTo("\"" + WIFI_SSID + "\"") == 0)
+				{
+					wifindus_public = item;
+					break;
+				}
+			}
+			if (wifindus_public == null)
+			{
+				wifindus_public = new WifiConfiguration();
+				isNew = true;
+			}
+			wifindus_public.SSID = "\"" + WIFI_SSID + "\"";
+			wifindus_public.preSharedKey = "\"" + WIFI_PSK + "\"";
+			wifindus_public.status = WifiConfiguration.Status.ENABLED;
+			wifindus_public.hiddenSSID = true;
+			wifindus_public.priority = 99999;
+			wifindus_public.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+			wifindus_public.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
+			wifindus_public.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
+			wifindus_public.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
+			wifindus_public.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+			wifindus_public.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
+			wifindus_public.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+			wifindus_public.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+			wifindus_public.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
+			wifindus_public.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
+			if (isNew)
+				wifiManager.addNetwork(wifindus_public);
+			else
+				wifiManager.updateNetwork(wifindus_public);
+			wifiManager.saveConfiguration();
+		}
+
+		if (isCancelled())
+			return;
+
 		//scan for new ap's
 		Logger.i(this, "Scanning local AP's...");
 		scanResultsAvailable = false;
@@ -166,7 +178,7 @@ public class WifiThread extends BaseThread
 		while (!scanResultsAvailable) //set by broadcast receiver in service
 		{
 			safesleep(1000);
-			if (++count >= 15)
+			if (++count >= 30)
 			{
 				Logger.e(this, "AP scan timed out.");
 				return;
