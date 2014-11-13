@@ -90,7 +90,7 @@ public class PingFragment extends BaseFragment
                 else
                 {
                     if (result.error)
-                        sb.append("<i><font color=\"red\">error.</font></i> ");
+                        sb.append("<i><font color=\"#CC0000\">error.</font></i> ");
                     else {
                         sb.append(colorHTML("%.2f ms",result.averageTime, 200, 150, 100.0));
                         sb.append(colorHTML(" (%.2f%% loss)",result.loss, 50.0, 30.0, 20.0));
@@ -122,11 +122,11 @@ public class PingFragment extends BaseFragment
         if (value >= yellow)
         {
             if (value >= red)
-                color = "red";
+                color = "#CC0000";
             else if (value >= orange)
-                color="orange";
+                color="#FF9933";
             else
-                color = "yellow";
+                color = "#FFCC00";
         }
         String output = String.format(format, value);
         if (!color.isEmpty())

@@ -66,11 +66,11 @@ public class LogFragment extends BaseFragment
         {
             switch (item.getLevel())
             {
-                case Logger.LOG_ERROR: sb.append("<b><font color=\"red\">"); break;
-                case Logger.LOG_WARNING: sb.append("<font color=\"yellow\">"); break;
+                case Logger.LOG_ERROR: sb.append("<b><font color=\"#CC0000\">"); break;
+                case Logger.LOG_WARNING: sb.append("<font color=\"#FF9933\">"); break;
             }
             String message = item.getMessage();
-            message = PATTERN_OK.matcher(message).replaceAll("<font color=\"green\">OK</font>");
+            message = PATTERN_OK.matcher(message).replaceAll("<font color=\"#009933\">OK</font>");
             sb.append(message);
             switch (item.getLevel())
             {
