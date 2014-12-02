@@ -18,7 +18,7 @@ import com.wifindus.meshtester.Static;
 public class StatusFragment extends BaseFragment
 {
     private TextView connectionState, connectedSince, meshAddress,
-            node, nodeAddress, hash, uptime, location, lastCleaned;
+            node, nodeAddress, id, uptime, location, lastCleaned;
     private Handler timerHandler = new Handler();
     private static final String TAG = StatusFragment.class.getName();
 
@@ -36,7 +36,7 @@ public class StatusFragment extends BaseFragment
         meshAddress = (TextView)view.findViewById(R.id.field_mesh_ip_address);
         node = (TextView)view.findViewById(R.id.field_mesh_node);
         nodeAddress = (TextView)view.findViewById(R.id.field_mesh_node_ip_address);
-        hash = (TextView)view.findViewById(R.id.field_hash);
+		id = (TextView)view.findViewById(R.id.field_hash);
         uptime = (TextView)view.findViewById(R.id.field_uptime);
         location = (TextView)view.findViewById(R.id.field_location);
         lastCleaned = (TextView)view.findViewById(R.id.field_mesh_last_cleaned);
@@ -61,7 +61,7 @@ public class StatusFragment extends BaseFragment
     @Override
     public void update()
     {
-        hash.setText(MeshApplication.getHash());
+		id.setText(Long.toHexString(MeshApplication.getID()).toUpperCase());
         if (MeshApplication.isMeshConnected())
         {
             connectionState.setText("Yes");

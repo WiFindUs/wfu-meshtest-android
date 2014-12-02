@@ -44,7 +44,7 @@ public class MeshApplication extends Application
     private static volatile long lastCleanTime = 0;
 
     //device info
-    private static volatile String hash = null;
+    private static volatile long id = -1;
     private static volatile int userID = -1;
     private static volatile long lastSignInTime = 0;
     private static volatile ConcurrentHashMap<Integer, String> userNames
@@ -57,7 +57,7 @@ public class MeshApplication extends Application
     private static volatile InetAddress meshInetAddress = null;
     private static volatile String meshHostName = "";
     private static volatile int meshNodeNumber = 0;
-    private static volatile String meshNodeHash = "";
+    private static volatile long meshNodeID = -1;
 
     //pings
     private static volatile PingThread pingThread = null;
@@ -83,20 +83,11 @@ public class MeshApplication extends Application
         if (preferences == null)
             preferences = getSharedPreferences("com.wifindus.eye.sharedprefs", Context.MODE_PRIVATE);
 
-        //hash
-        SharedPreferences.Editor editor = preferences.edit();
-        String tempHash = preferences.getString("hash", null);
-        if (tempHash == null) {
-            String seed = "abcdefghijklmnopqrstuvwxyzABCDEFHIJKLMNOPQRSTUVWXYZ0123456789";
-            Random r = new Random();
-            tempHash = "";
-            for (int i = 0; i < 8; i++) {
-                int idx = r.nextInt(seed.length());
-                tempHash += seed.substring(idx, idx + 1);
-            }
-            editor.putString("hash", tempHash);
-        }
-        hash = tempHash;
+        //id
+		SharedPreferences.Editor editor = preferences.edit();
+		id = preferences.getLong("id",-1);
+		if (id < 0)
+			editor.putLong("id", id = (long)(0xFFFFFFFF * new Random().nextDouble()));
 
         //currently signed in user
         userID = preferences.getInt("userID", -1);
@@ -128,9 +119,9 @@ public class MeshApplication extends Application
 
     public static final SystemManager systems() { return systemManager; }
 
-    public static final String getHash()
+    public static final long getID()
     {
-        return hash;
+        return id;
     }
 
     public static final Location getLocation()

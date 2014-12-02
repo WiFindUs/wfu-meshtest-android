@@ -94,9 +94,8 @@ public class UpdateThread extends BaseThread
             return;
 
         //generate message content
-        String message = "hash:" + MeshApplication.getHash()
-            + "|ts:" + time
-			+ "|ty:DEVICE"
+        String message = "EYE|DEV|" + Long.toHexString(MeshApplication.getID()).toUpperCase()
+            + "|" + Long.toHexString(time).toUpperCase()
 			+ "|dt:" + MeshApplication.getDeviceType()
             + "|user:" + MeshApplication.getUserID()
             + "|ver:" + versionString
