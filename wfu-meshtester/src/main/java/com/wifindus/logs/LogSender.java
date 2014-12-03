@@ -1,4 +1,4 @@
-package com.wifindus.meshtester.logs;
+package com.wifindus.logs;
 
         import android.content.Context;
 

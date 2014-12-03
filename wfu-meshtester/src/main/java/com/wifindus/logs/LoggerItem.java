@@ -1,4 +1,4 @@
-package com.wifindus.meshtester.logs;
+package com.wifindus.logs;
 
 /**
  * Created by marzer on 26/04/2014.

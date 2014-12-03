@@ -1,16 +1,16 @@
-package com.wifindus.meshtester.threads;
+package com.wifindus;
 
 import android.content.Context;
 
 import com.wifindus.meshtester.MeshApplication;
 import com.wifindus.meshtester.MeshService;
 import com.wifindus.meshtester.SystemManager;
-import com.wifindus.meshtester.logs.LogSender;
+import com.wifindus.logs.LogSender;
 
 /**
  * Created by marzer on 25/04/2014.
  */
-public abstract class BaseThread extends Thread implements LogSender
+public abstract class BaseThread extends Thread implements LogSender, TimeoutProvider
 {
     private static final long WAIT_LOOP_INTERVAL = 200;
     private static volatile boolean cancelAll = false;
@@ -45,7 +45,7 @@ public abstract class BaseThread extends Thread implements LogSender
         while (!isCancelled())
         {
             iteration();
-            if (!waitloop(iterationInterval()))
+            if (!waitloop(this))
                 break;
         }
         cleanup();
@@ -81,6 +81,12 @@ public abstract class BaseThread extends Thread implements LogSender
         cancel = true;
     }
 
+	/**
+	 * Determines how long the thread should wait before trying it's main iteration loop again. Threads may wish to override this depending on current hardware state etc.
+	 * @return The length of time in milliseconds.
+	 */
+	public long timeoutLength() { return 5000; }
+
     /////////////////////////////////////////////////////////////////////
     // PROTECTED METHODS
     /////////////////////////////////////////////////////////////////////
@@ -90,57 +96,33 @@ public abstract class BaseThread extends Thread implements LogSender
      * @param waitCheck A condition to evaluate at each iteration.
      * @return <b>true</b> when waitCheck's ConditionCheck() evaluates to true, <b>false</b> if the timeout was reached or the wait was interrupted (e.g. due to thread cancellation).
      */
-    protected final boolean waiteval(ThreadWaitCondition waitCheck)
+    protected final boolean waiteval(ThreadWaitCondition waitCheck, TimeoutProvider timeout)
     {
         long counter = 0;
-        long currentTimeout = waitCheck.timeoutLength();
-        long iteration_length = waitCheck.iterationLength();
-
-        while(currentTimeout < 0 || counter < currentTimeout)
+        while(timeout.timeoutLength() < 0 || counter < timeout.timeoutLength())
         {
             if (waitCheck.conditionCheck())
                 return true;
-
-            if (!safesleep(iteration_length) || isCancelled())
+            if (!safesleep(WAIT_LOOP_INTERVAL) || isCancelled())
                 return false;
-            waitCheck.postWaitUpdate();
-            counter += iteration_length;
-
-            long newTimeout = waitCheck.timeoutLength();
-            if (newTimeout != currentTimeout)
-            {
-                counter = 0;
-                currentTimeout = newTimeout;
-            }
+            counter += WAIT_LOOP_INTERVAL;
         }
-
         return false;
-    }
-
-    /**
-     * Waits in a loop for the specified timeout, checking for cancelled state at each iteration. The same as {@link #waitloop(long,long)}, but uses {@link #WAIT_LOOP_INTERVAL} as the iteration_timeout parameter.
-     * @param timeout A length of time to wait for (at least), in milliseconds.
-     * @return <b>true</b> if the timeout was reached without interruption (eg due to thread cancellation), <b>false</b> otherwise.
-     */
-    protected final boolean waitloop(long timeout)
-    {
-        return waitloop(timeout, WAIT_LOOP_INTERVAL);
     }
 
     /**
      * Waits in a loop for the specified timeout, checking for cancelled state at each iteration.
      * @param timeout A length of time to wait for (at least) in total (ms).
-     * @param iteration_timeout A length of time to wait for (at least) at each iteration of the loop (ms).
      * @return <b>true</b> if the timeout was reached without interruption (eg due to thread cancellation), <b>false</b> otherwise.
      */
-    protected final boolean waitloop(long timeout, long iteration_timeout)
+    protected final boolean waitloop(TimeoutProvider timeout)
     {
         long counter = 0;
-        while(timeout < 0 || counter < timeout)
+        while(timeout.timeoutLength() < 0 || counter < timeout.timeoutLength())
         {
-            if (!safesleep(iteration_timeout) || isCancelled())
+            if (!safesleep(WAIT_LOOP_INTERVAL) || isCancelled())
                 return false;
-            counter += iteration_timeout;
+            counter += WAIT_LOOP_INTERVAL;
         }
         return true;
     }
@@ -154,15 +136,6 @@ public abstract class BaseThread extends Thread implements LogSender
     {
         try { Thread.sleep(timeout); } catch (InterruptedException e) { return false; }
         return true;
-    }
-
-    /**
-     * Determines how long the thread should wait before trying it's main iteration loop again. Threads may wish to override this depending on current hardware state etc.
-     * @return The length of time in milliseconds.
-     */
-    protected long iterationInterval()
-    {
-        return 5000;
     }
 
     /**

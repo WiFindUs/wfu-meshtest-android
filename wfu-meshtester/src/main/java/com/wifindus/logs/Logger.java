@@ -1,7 +1,5 @@
-package com.wifindus.meshtester.logs;
+package com.wifindus.logs;
 
-import android.content.Context;
-import android.content.Intent;
 import android.util.Log;
 
 import com.wifindus.meshtester.MeshApplication;
