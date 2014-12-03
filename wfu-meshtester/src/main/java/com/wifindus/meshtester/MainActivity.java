@@ -21,8 +21,8 @@ import com.wifindus.meshtester.fragments.LogFragment;
 import com.wifindus.meshtester.fragments.PingFragment;
 import com.wifindus.meshtester.fragments.UserFragment;
 import com.wifindus.meshtester.fragments.StatusFragment;
-import com.wifindus.meshtester.logs.LogSender;
-import com.wifindus.meshtester.logs.Logger;
+import com.wifindus.logs.LogSender;
+import com.wifindus.logs.Logger;
 
 
 public class MainActivity extends FragmentActivity
@@ -83,6 +83,7 @@ public class MainActivity extends FragmentActivity
         intentFilter.addAction(MeshApplication.ACTION_UPDATE_CLEANED);
         intentFilter.addAction(MeshApplication.ACTION_UPDATE_USER);
         intentFilter.addAction(MeshApplication.ACTION_UPDATE_PINGS);
+		intentFilter.addAction(MeshApplication.ACTION_UPDATE_BATTERY);
         registerReceiver(meshActivityReceiver, intentFilter);
 
         //create the background service
@@ -207,7 +208,8 @@ public class MainActivity extends FragmentActivity
             else if (arg1.getAction().equals(MeshApplication.ACTION_UPDATE_CONNECTION_STATE)
              || arg1.getAction().equals(MeshApplication.ACTION_UPDATE_LOCATION)
              || arg1.getAction().equals(MeshApplication.ACTION_UPDATE_MESH_ADDRESS)
-             || arg1.getAction().equals(MeshApplication.ACTION_UPDATE_CLEANED))
+             || arg1.getAction().equals(MeshApplication.ACTION_UPDATE_CLEANED)
+			 || arg1.getAction().equals(MeshApplication.ACTION_UPDATE_BATTERY))
             {
                 if (statusFragment != null)
                     statusFragment.update();

@@ -2,10 +2,11 @@ package com.wifindus.meshtester.threads;
 
 import android.content.Context;
 
+import com.wifindus.BaseThread;
 import com.wifindus.PingResult;
 import com.wifindus.meshtester.MeshApplication;
 import com.wifindus.meshtester.Static;
-import com.wifindus.meshtester.logs.Logger;
+import com.wifindus.logs.Logger;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -64,7 +65,7 @@ public class PingThread extends BaseThread
     }
 
     @Override
-    protected long iterationInterval()
+    public long timeoutLength()
     {
         return 200;
     }

@@ -28,6 +28,7 @@ public abstract class Static
 {
     public static final Random random = new Random();
     public static final DecimalFormat locationFormat = new DecimalFormat("#.########");
+	public static final DecimalFormat percentageFormat = new DecimalFormat("#.##");
 
     /**
      * Detect if the system's Airplane mode is turned on.

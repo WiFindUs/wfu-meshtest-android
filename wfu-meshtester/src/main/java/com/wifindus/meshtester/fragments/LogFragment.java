@@ -2,7 +2,6 @@ package com.wifindus.meshtester.fragments;
 
 import android.os.Bundle;
 import android.text.Html;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,11 +9,10 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.wifindus.meshtester.R;
-import com.wifindus.meshtester.logs.Logger;
-import com.wifindus.meshtester.logs.LoggerItem;
+import com.wifindus.logs.Logger;
+import com.wifindus.logs.LoggerItem;
 
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 

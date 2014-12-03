@@ -5,7 +5,7 @@ package com.wifindus.meshtester.fragments;
 
         import com.wifindus.meshtester.MeshApplication;
         import com.wifindus.meshtester.MeshService;
-        import com.wifindus.meshtester.logs.LogSender;
+        import com.wifindus.logs.LogSender;
 
 public abstract class BaseFragment extends Fragment implements LogSender
 {

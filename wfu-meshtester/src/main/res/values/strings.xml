@@ -12,6 +12,7 @@
     <string name="app_notification_subtext">Click to return to the app.</string>
     <string name="data_latlong">%1$f°, %2$f°</string>
     <string name="data_node">%1$d (%2$s)</string>
+    <string name="data_battery">%1$d%% %2$s</string>
 
     <!-- user page -->
     <string name="user_current">Current User</string>
@@ -37,6 +38,8 @@
     <string name="status_location">Location:</string>
     <string name="status_hash">Hash:</string>
     <string name="status_last_cleaned">Update sent:</string>
+    <string name="status_battery">Battery:</string>
+
 
     <!-- ping page -->
     <string name="ping_controls">Controls</string>

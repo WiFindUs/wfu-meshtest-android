@@ -10,8 +10,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.wifindus.BaseThread;
 import com.wifindus.meshtester.MeshApplication;
-import com.wifindus.meshtester.logs.Logger;
+import com.wifindus.logs.Logger;
 
 /**
  * Created by marzer on 25/04/2014.
@@ -25,6 +26,7 @@ public class LocationThread extends BaseThread implements LocationListener
     private Handler handler = null;
     private boolean ok = false;
     private Location location = null;
+	private float batt = 1.0f;
 
     /////////////////////////////////////////////////////////////////////
     // CONSTRUCTORS
@@ -74,11 +76,11 @@ public class LocationThread extends BaseThread implements LocationListener
     /////////////////////////////////////////////////////////////////////
 
     @Override
-    protected long iterationInterval()
+    public long timeoutLength()
     {
-        if (!hasGPS)
-            return 10000;
-        return 1000;
+        float battery = MeshApplication.getBatteryPercentage();
+		return (battery >= 0.75f || MeshApplication.getBatteryCharging()) ? 1000 :
+			(battery >= 0.25 ? 2500 : 5000);
     }
 
     @Override
@@ -95,28 +97,7 @@ public class LocationThread extends BaseThread implements LocationListener
             cancelThread();
             return;
         }
-        handler.post(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                Criteria criteria = new Criteria();
-                criteria.setAccuracy(Criteria.ACCURACY_FINE);
-                criteria.setAltitudeRequired(false);
-                criteria.setBearingRequired(false);
-                criteria.setHorizontalAccuracy(Criteria.ACCURACY_HIGH);
-                criteria.setCostAllowed(false);
-                criteria.setPowerRequirement(Criteria.POWER_HIGH);
-
-                systems().getLocationManager().requestLocationUpdates(
-                        iterationInterval(),
-                        5,
-                        criteria,
-                        LocationThread.this,
-                        null
-                );
-            }
-        });
+		registerLocationUpdateListener();
         assessLocation(systems().getLocationManager().getLastKnownLocation(LocationManager.GPS_PROVIDER));
         ok = true;
         Logger.i(this, "Location thread OK.");
@@ -125,7 +106,13 @@ public class LocationThread extends BaseThread implements LocationListener
     @Override
     protected void iteration()
     {
-        assessLocation(systems().getLocationManager().getLastKnownLocation(LocationManager.GPS_PROVIDER));
+		assessLocation(systems().getLocationManager().getLastKnownLocation(LocationManager.GPS_PROVIDER));
+
+		//check battery level shifts
+		float newBatt = MeshApplication.getBatteryPercentage();
+		if ((batt >= 0.75f && newBatt < 0.75f) || (batt >= 0.25f && newBatt < 0.25f))
+			registerLocationUpdateListener();
+		batt = newBatt;
     }
 
     @Override
@@ -180,6 +167,35 @@ public class LocationThread extends BaseThread implements LocationListener
             return true;
         return false;
     }
+
+	private void registerLocationUpdateListener()
+	{
+		handler.post(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				Logger.i(LocationThread.this, "Registering location updates");
+				systems().getLocationManager().removeUpdates(LocationThread.this);
+
+				Criteria criteria = new Criteria();
+				criteria.setAccuracy(Criteria.ACCURACY_FINE);
+				criteria.setAltitudeRequired(false);
+				criteria.setBearingRequired(false);
+				criteria.setHorizontalAccuracy(Criteria.ACCURACY_HIGH);
+				criteria.setCostAllowed(false);
+				criteria.setPowerRequirement(Criteria.POWER_HIGH);
+
+				systems().getLocationManager().requestLocationUpdates(
+					timeoutLength(),
+					5,
+					criteria,
+					LocationThread.this,
+					null
+				);
+			}
+		});
+	}
 
     /** Checks whether two providers are the same */
     private boolean isSameProvider(String provider1, String provider2)

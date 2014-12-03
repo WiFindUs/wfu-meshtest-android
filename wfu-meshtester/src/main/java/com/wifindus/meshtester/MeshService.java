@@ -9,13 +9,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
 import android.net.wifi.WifiManager;
+import android.os.BatteryManager;
 import android.os.Build;
 import android.os.IBinder;
 
-import com.wifindus.meshtester.logs.LogSender;
-import com.wifindus.meshtester.logs.Logger;
+import com.wifindus.logs.LogSender;
+import com.wifindus.logs.Logger;
 import com.wifindus.meshtester.threads.LocationThread;
-import com.wifindus.meshtester.threads.PingThread;
 import com.wifindus.meshtester.threads.UpdateThread;
 import com.wifindus.meshtester.threads.WifiThread;
 
@@ -28,6 +28,8 @@ public class MeshService extends Service implements LogSender
     private volatile UpdateThread updateThread = null;
     private volatile boolean ready = false;
 	private volatile MeshServiceReceiver meshServiceReceiver = null;
+	private volatile BatteryLevelReceiver batteryLevelReceiver = null;
+	private volatile long lastBatteryUpdate = -1;
 
     public MeshService()
     {
@@ -73,11 +75,16 @@ public class MeshService extends Service implements LogSender
         //attach to application
         MeshApplication.setMeshService(this);
 
-		//set up the broadcast receiver
+		//set up the mesh broadcast receiver
 		meshServiceReceiver = new MeshServiceReceiver();
 		IntentFilter intentFilter = new IntentFilter();
 		intentFilter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
 		registerReceiver(meshServiceReceiver, intentFilter);
+
+		//set up the battery stats receiver
+		batteryLevelReceiver = new BatteryLevelReceiver();
+		intentFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+		registerReceiver(batteryLevelReceiver, intentFilter);
 
         //start threads
         wifiThread = new WifiThread(this);
@@ -99,6 +106,7 @@ public class MeshService extends Service implements LogSender
     public void onDestroy()
     {
         unregisterReceiver(meshServiceReceiver);
+		unregisterReceiver(batteryLevelReceiver);
 		updateThread.cancelThread();
         locationThread.cancelThread();
         wifiThread.cancelThread();
@@ -135,6 +143,27 @@ public class MeshService extends Service implements LogSender
 				if (wifiThread != null)
 					wifiThread.newScanResultsAvailable();
 			}
+		}
+	}
+
+	private class BatteryLevelReceiver extends BroadcastReceiver
+	{
+		@Override
+		public void onReceive(Context context, Intent intent)
+		{
+			if ((System.currentTimeMillis() - lastBatteryUpdate) < 5000)
+				return;
+
+			lastBatteryUpdate = System.currentTimeMillis();
+			int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+			int status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+			int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+			float percentage = level == -1 || scale == -1 ? -1.0f : (level / (float)scale);
+
+			MeshApplication.updateBatteryStats(MeshService.this, percentage,
+				status == BatteryManager.BATTERY_STATUS_CHARGING ||
+					status == BatteryManager.BATTERY_STATUS_FULL
+			);
 		}
 	}
 }

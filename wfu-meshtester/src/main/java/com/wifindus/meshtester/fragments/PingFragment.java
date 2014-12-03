@@ -2,29 +2,20 @@ package com.wifindus.meshtester.fragments;
 
 import android.os.Bundle;
 import android.text.Html;
-import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.wifindus.PingResult;
-import com.wifindus.meshtester.MainActivity;
 import com.wifindus.meshtester.MeshApplication;
 import com.wifindus.meshtester.R;
-import com.wifindus.meshtester.logs.Logger;
-import com.wifindus.meshtester.logs.LoggerItem;
-import com.wifindus.meshtester.threads.PingThread;
 
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.regex.Pattern;
 
 /**
  * Created by marzer on 3/11/2014.

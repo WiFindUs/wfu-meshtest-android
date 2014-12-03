@@ -4,9 +4,10 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
 
+import com.wifindus.BaseThread;
 import com.wifindus.meshtester.MeshApplication;
 import com.wifindus.meshtester.Static;
-import com.wifindus.meshtester.logs.Logger;
+import com.wifindus.logs.Logger;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -22,7 +23,7 @@ public class UpdateThread extends BaseThread
 {
     private static final String TAG = UpdateThread.class.getName();
     private volatile DatagramSocket updateSocket;
-    private static final String WIFI_SERVER = "192.168.1.1";
+    private static final String WIFI_SERVER = "192.168.1.2";
     private static final int WIFI_SERVER_PORT = 33339;
     private static String versionString;
 
@@ -55,11 +56,13 @@ public class UpdateThread extends BaseThread
     // PROTECTED METHODS
     /////////////////////////////////////////////////////////////////////
 
-    @Override
-    protected long iterationInterval()
-    {
-        return 1000;
-    }
+	@Override
+	public long timeoutLength()
+	{
+		float battery = MeshApplication.getBatteryPercentage();
+		return (battery >= 0.75f || MeshApplication.getBatteryCharging()) ? 1000 :
+			(battery >= 0.25 ? 2500 : 5000);
+	}
 
     @Override
     protected void prepare()
@@ -87,28 +90,32 @@ public class UpdateThread extends BaseThread
             return;
 
         long time = System.currentTimeMillis();
-        if ((time - MeshApplication.lastCleaned()) >= 5000)
+        if ((time - MeshApplication.lastCleaned()) >= 10000)
             MeshApplication.forceDirty();
 
         if (!MeshApplication.isDirty())
             return;
 
-        //generate message content
-        String message = "EYE|DEV|" + Long.toHexString(MeshApplication.getID()).toUpperCase()
-            + "|" + Long.toHexString(time).toUpperCase()
+		//generate message content
+		String message = "EYE|DEV|" + Long.toHexString(MeshApplication.getID()).toUpperCase()
+			+ "|" + Long.toHexString(time).toUpperCase()
 			+ "|dt:" + MeshApplication.getDeviceType()
-            + "|user:" + MeshApplication.getUserID()
-            + "|ver:" + versionString
-            + "|sdk:" + android.os.Build.VERSION.SDK_INT;
-        Location loc = MeshApplication.getLocation();
+			+ "|ver:" + versionString
+			+ "|sdk:" + android.os.Build.VERSION.SDK_INT
+			+ "|user:" + (MeshApplication.getUserID() >= 0 ?
+				Long.toHexString(MeshApplication.getUserID()).toUpperCase()
+				: "-1")
+			+ "|batt:" + Static.percentageFormat.format(MeshApplication.getBatteryPercentage())
+			+ "|chg:" + (MeshApplication.getBatteryCharging() ? "1" : "0");
+		Location loc = MeshApplication.getLocation();
 		if (loc != null)
 		{
-            message += "|lat:" + Static.locationFormat.format(loc.getLatitude());
-            message += "|long:" + Static.locationFormat.format(loc.getLongitude());
-            if (loc.hasAccuracy())
-                message += "|acc:" + loc.getAccuracy();
-            if (loc.hasAltitude())
-                message += "|alt:" + loc.getAccuracy();
+			message += "|lat:" + Static.locationFormat.format(loc.getLatitude());
+			message += "|long:" + Static.locationFormat.format(loc.getLongitude());
+			if (loc.hasAccuracy())
+				message += "|acc:" + loc.getAccuracy();
+			if (loc.hasAltitude())
+				message += "|alt:" + loc.getAccuracy();
 		}
 
         try

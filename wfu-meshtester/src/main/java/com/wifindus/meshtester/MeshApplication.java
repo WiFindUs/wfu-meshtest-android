@@ -2,20 +2,16 @@ package com.wifindus.meshtester;
 
 import android.app.Application;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 
 import com.wifindus.MathHelper;
 import com.wifindus.PingResult;
-import com.wifindus.meshtester.logs.Logger;
 import com.wifindus.meshtester.threads.PingThread;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -33,6 +29,7 @@ public class MeshApplication extends Application
     public static final String ACTION_UPDATE_CLEANED = MeshApplication.ACTION_PREFIX + "UPDATE_CLEANED";
     public static final String ACTION_UPDATE_USER = MeshApplication.ACTION_PREFIX + "UPDATE_USER";
     public static final String ACTION_UPDATE_PINGS = MeshApplication.ACTION_PREFIX + "UPDATE_PINGS";
+	public static final String ACTION_UPDATE_BATTERY = MeshApplication.ACTION_PREFIX + "UPDATE_BATTERY";
 
     private static volatile MeshService meshService = null;
     private static volatile SystemManager systemManager =  null;
@@ -49,6 +46,8 @@ public class MeshApplication extends Application
     private static volatile long lastSignInTime = 0;
     private static volatile ConcurrentHashMap<Integer, String> userNames
         = new ConcurrentHashMap<Integer, String>();
+	private static volatile float batteryPercentage = 1.0f;
+	private static volatile boolean batteryCharging = false;
 
     //mesh status
     private static volatile boolean meshConnected = false;
@@ -87,7 +86,7 @@ public class MeshApplication extends Application
 		SharedPreferences.Editor editor = preferences.edit();
 		id = preferences.getLong("id",-1);
 		if (id < 0)
-			editor.putLong("id", id = (long)(0xFFFFFFFF * new Random().nextDouble()));
+			editor.putLong("id", id = (long)(0xFFFFFFFFL * new Random().nextDouble()));
 
         //currently signed in user
         userID = preferences.getInt("userID", -1);
@@ -171,6 +170,10 @@ public class MeshApplication extends Application
         String name = userNames.get(Integer.valueOf(userID));
         return name == null ? "" : name;
     }
+
+	public static final float getBatteryPercentage() { return batteryPercentage; }
+
+	public static final boolean getBatteryCharging() { return batteryCharging; }
 
     public static final ConcurrentHashMap<Integer, PingResult> getNodePings()
     {
@@ -285,6 +288,16 @@ public class MeshApplication extends Application
 
         Static.broadcastSimpleIntent(context, ACTION_UPDATE_MESH_ADDRESS);
     }
+
+	public static void updateBatteryStats(Context context, float percentage, boolean charging)
+	{
+		if (percentage >= 0.0f)
+			batteryPercentage = percentage;
+		batteryCharging = charging;
+		dirty = true;
+
+		Static.broadcastSimpleIntent(context, ACTION_UPDATE_BATTERY);
+	}
 
     public static void updateNodePing(Context context, int node, PingResult newResult)
     {

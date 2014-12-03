@@ -9,8 +9,9 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 
+import com.wifindus.BaseThread;
 import com.wifindus.meshtester.MeshApplication;
-import com.wifindus.meshtester.logs.Logger;
+import com.wifindus.logs.Logger;
 
 import java.util.List;
 
@@ -62,10 +63,12 @@ public class WifiThread extends BaseThread
     /////////////////////////////////////////////////////////////////////
 
     @Override
-    protected long iterationInterval()
-    {
-        return 60000;
-    }
+	public long timeoutLength()
+	{
+		float battery = MeshApplication.getBatteryPercentage();
+		return (battery >= 0.75f || MeshApplication.getBatteryCharging()) ? 10000 :
+			(battery >= 0.25 ? 30000 : 60000);
+	}
 
     @Override
     protected void prepare()
@@ -200,7 +203,8 @@ public class WifiThread extends BaseThread
 		{
 			if (result.SSID == null || result.SSID.compareTo(WIFI_SSID) != 0)
 				continue;
-			if (bestFit == null || result.level > bestFit.level)
+			//todo: threshold comparison
+			if (bestFit == null || (result.level - bestFit.level) > 3)
 				bestFit = result;
 		}
 		if (bestFit == null)

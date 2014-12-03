@@ -46,7 +46,7 @@ public class UserFragment extends BaseFragment  {
     {
         super.onResume();
         update();
-        timerHandler.postDelayed(timerRunnable, 1000);
+        timerHandler.postDelayed(timerRunnable, 250);
     }
 
     @Override
@@ -147,7 +147,7 @@ public class UserFragment extends BaseFragment  {
         public void run()
         {
             updateSignedInTime();
-            timerHandler.postDelayed(this, 1000);
+            timerHandler.postDelayed(this, 250);
         }
     };
 }

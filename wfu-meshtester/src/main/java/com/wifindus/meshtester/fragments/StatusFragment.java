@@ -18,7 +18,7 @@ import com.wifindus.meshtester.Static;
 public class StatusFragment extends BaseFragment
 {
     private TextView connectionState, connectedSince, meshAddress,
-            node, nodeAddress, id, uptime, location, lastCleaned;
+            node, nodeAddress, id, uptime, location, lastCleaned, battery;
     private Handler timerHandler = new Handler();
     private static final String TAG = StatusFragment.class.getName();
 
@@ -40,6 +40,7 @@ public class StatusFragment extends BaseFragment
         uptime = (TextView)view.findViewById(R.id.field_uptime);
         location = (TextView)view.findViewById(R.id.field_location);
         lastCleaned = (TextView)view.findViewById(R.id.field_mesh_last_cleaned);
+		battery = (TextView)view.findViewById(R.id.field_battery);
         return view;
     }
 
@@ -48,7 +49,7 @@ public class StatusFragment extends BaseFragment
     {
         super.onResume();
         update();
-        timerHandler.postDelayed(timerRunnable, 1000);
+        timerHandler.postDelayed(timerRunnable, 250);
     }
 
     @Override
@@ -86,6 +87,10 @@ public class StatusFragment extends BaseFragment
         location.setText(loc != null ? getResources().getString(R.string.data_latlong,
                 loc.getLatitude(),loc.getLongitude()) : "");
 
+		battery.setText(getResources().getString(R.string.data_battery,
+			(int)(MeshApplication.getBatteryPercentage()*100.0f),
+				MeshApplication.getBatteryCharging() ? "(charging)" : ""));
+
         updateUptime();
     }
 
@@ -120,7 +125,7 @@ public class StatusFragment extends BaseFragment
         public void run()
         {
             updateUptime();
-            timerHandler.postDelayed(this, 1000);
+            timerHandler.postDelayed(this, 250);
         }
     };
 }
