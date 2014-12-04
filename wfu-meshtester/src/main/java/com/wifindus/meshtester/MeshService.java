@@ -16,14 +16,14 @@ import android.os.IBinder;
 import com.wifindus.logs.LogSender;
 import com.wifindus.logs.Logger;
 import com.wifindus.meshtester.threads.LocationThread;
+import com.wifindus.meshtester.threads.NetworkThread;
 import com.wifindus.meshtester.threads.UpdateThread;
-import com.wifindus.meshtester.threads.WifiThread;
 
 public class MeshService extends Service implements LogSender
 {
     public static final String RESTORE_FROM_SERVICE = "RESTORE_FROM_SERVICE";
     private static final String TAG = MeshService.class.getName();
-    private volatile WifiThread wifiThread = null;
+    private volatile NetworkThread networkThread = null;
     private volatile LocationThread locationThread = null;
     private volatile UpdateThread updateThread = null;
     private volatile boolean ready = false;
@@ -86,8 +86,8 @@ public class MeshService extends Service implements LogSender
 		registerReceiver(batteryLevelReceiver, intentFilter);
 
         //start threads
-        wifiThread = new WifiThread(this);
-        wifiThread.start();
+        networkThread = new NetworkThread(this);
+        networkThread.start();
         locationThread = new LocationThread(this);
         locationThread.start();
         updateThread = new UpdateThread(this);
@@ -108,7 +108,7 @@ public class MeshService extends Service implements LogSender
 		unregisterReceiver(batteryLevelReceiver);
 		updateThread.cancelThread();
         locationThread.cancelThread();
-        wifiThread.cancelThread();
+        networkThread.cancelThread();
         MeshApplication.stopPingThread(this);
         MeshApplication.setMeshService(null);
         Logger.i(this, "Service stopped.");
@@ -139,8 +139,8 @@ public class MeshService extends Service implements LogSender
 		{
 			if (arg1.getAction().equals(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION))
 			{
-				if (wifiThread != null)
-					wifiThread.newScanResultsAvailable();
+				if (networkThread != null)
+					networkThread.newScanResultsAvailable();
 			}
 		}
 	}

@@ -30,15 +30,25 @@ public abstract class Static
 	public static final Random random = new Random();
     public static final DecimalFormat locationFormat = new DecimalFormat("#.########");
 	public static final DecimalFormat percentageFormat = new DecimalFormat("#.##");
-	public static final Pattern PATTERN_IP_ADDRESS = Pattern.compile("\\s*"
-		//octets
-		+"((?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)[.]"
+	public static final Pattern PATTERN_HOSTNAME_PORT = Pattern.compile("\\s*"
+		//hostname/ip
+		+"("
+		//ipv4 address
+		+"(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)[.]"
 		+"(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)[.]"
 		+"(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)[.]"
 		+"(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))"
+		//hostname
+		+"|(?:(?:(?:[A-Z0-9]|[A-Z0-9][A-Z0-9\\-]*[A-Z0-9])[.])*(?:[A-Z0-9]|[A-Z0-9][A-Z0-9\\-]*[A-Z0-9]))"
+		//end hostname/ip
+		+")"
 		//port (optional)
 		+ "([:][0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])?"
-		+"\\s*");
+		+"\\s*", Pattern.CASE_INSENSITIVE);
+
+
+
+
 
     /**
      * Detect if the system's Airplane mode is turned on.

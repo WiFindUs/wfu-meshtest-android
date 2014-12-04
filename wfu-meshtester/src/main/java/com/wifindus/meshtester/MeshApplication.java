@@ -8,6 +8,7 @@ import android.telephony.TelephonyManager;
 
 import com.wifindus.MathHelper;
 import com.wifindus.PingResult;
+import com.wifindus.logs.Logger;
 import com.wifindus.meshtester.threads.PingThread;
 
 import java.net.InetAddress;
@@ -31,6 +32,7 @@ public class MeshApplication extends Application
     public static final String ACTION_UPDATE_USER = MeshApplication.ACTION_PREFIX + "UPDATE_USER";
     public static final String ACTION_UPDATE_PINGS = MeshApplication.ACTION_PREFIX + "UPDATE_PINGS";
 	public static final String ACTION_UPDATE_BATTERY = MeshApplication.ACTION_PREFIX + "UPDATE_BATTERY";
+	public static final String ACTION_UPDATE_SERVER = MeshApplication.ACTION_PREFIX + "UPDATE_SERVER";
 
     private static volatile MeshService meshService = null;
     private static volatile SystemManager systemManager =  null;
@@ -52,14 +54,18 @@ public class MeshApplication extends Application
 
     //mesh status
     private static volatile boolean meshConnected = false;
-    private static volatile long meshConnectedSince = 0;
-    private static volatile int meshAddress = 0;
-    private static volatile InetAddress meshInetAddress = null;
-    private static volatile String meshHostName = "";
-    private static volatile int meshNodeNumber = 0;
+	private static volatile long meshConnectedSince = 0;
+	private static volatile int meshAddress = 0;
+	private static volatile InetAddress meshInetAddress = null;
+	private static volatile String meshHostName = "";
+	private static volatile int meshNodeNumber = 0;
     private static volatile long meshNodeID = -1;
-	private static volatile String serverIPAddress = "";
+
+	//network/server
+	private static volatile String serverHostName = "";
 	private static volatile int serverPort = -1;
+	private static volatile InetAddress serverAddress = null;
+	private static volatile boolean forceMeshConnection = true;
 
     //pings
     private static volatile PingThread pingThread = null;
@@ -101,12 +107,28 @@ public class MeshApplication extends Application
         }
 
 		//server IP address and port
-		serverIPAddress = preferences.getString("serverIPAddress", "");
-		if (serverIPAddress.length() == 0)
-			editor.putString("serverIPAddress", serverIPAddress = "192.168.1.1");
+		serverHostName = preferences.getString("serverHostName", "");
+		if (serverHostName.length() == 0)
+			editor.putString("serverHostName", serverHostName = "192.168.1.1");
+		try
+		{
+			serverAddress = InetAddress.getByName(serverHostName);
+		}
+		catch(UnknownHostException e)
+		{
+			editor.putString("serverHostName", serverHostName = "192.168.1.1");
+			try
+			{
+				serverAddress = InetAddress.getByName(serverHostName);
+			}
+			catch (UnknownHostException ex) { } //shouldn't fail
+		}
 		serverPort = preferences.getInt("serverPort", -1);
 		if (serverPort < 0)
 			editor.putInt("serverPort", serverPort = 33339);
+
+		//force mesh usage
+		forceMeshConnection = preferences.getBoolean("forceMeshConnection", true);
 
         editor.commit();
     }
@@ -133,32 +155,64 @@ public class MeshApplication extends Application
         return id;
     }
 
+	public static final boolean getForceMeshConnection() { return forceMeshConnection; }
+
+	public static final void setForceMeshConnection(boolean force)
+	{
+		if (force == forceMeshConnection)
+			return;
+		SharedPreferences.Editor editor = preferences.edit();
+		editor.putBoolean("forceMeshConnection", forceMeshConnection = force);
+		editor.commit();
+	}
+
 	public static final int getServerPort()
 	{
 		return serverPort;
 	}
 
-	public static final String getServerIPAddress()
+	public static final String getServerHostName()
 	{
-		return serverIPAddress;
+		return serverHostName;
 	}
 
-	public static final boolean setServer(String ip, int port)
+	public static final InetAddress getServerAddress()
 	{
-		if (ip == null || ip.length() == 0
-			|| port < 1024 || port > 65535
-			|| (ip.compareTo(serverIPAddress) == 0
-				&& port == serverPort))
+		return serverAddress;
+	}
+
+	public static final boolean setServer(Context context, String hostname, int port)
+	{
+		boolean changeHost = hostname != null && hostname.length() != 0
+			&& hostname.compareTo(serverHostName) != 0;
+		boolean changePort = port >= 1024 && port <= 65535 && port != serverPort;
+
+		if (!changeHost && !changePort)
 			return false;
 
-		serverIPAddress = ip;
-		serverPort = port;
-
 		SharedPreferences.Editor editor = preferences.edit();
-		editor.putString("serverIPAddress", serverIPAddress);
-		editor.putInt("serverPort", serverPort);
-		editor.commit();
 
+		if (changeHost)
+		{
+			InetAddress newAddress = null;
+			try
+			{
+				newAddress = InetAddress.getByName(hostname);
+			}
+			catch (UnknownHostException ex)
+			{
+				return false;
+			}
+
+			editor.putString("serverHostName", serverHostName = hostname);
+			serverAddress = newAddress;
+		}
+
+		if(changePort)
+			editor.putInt("serverPort", serverPort = port);
+
+		editor.commit();
+		Static.broadcastSimpleIntent(context, ACTION_UPDATE_SERVER);
 		return true;
 	}
 

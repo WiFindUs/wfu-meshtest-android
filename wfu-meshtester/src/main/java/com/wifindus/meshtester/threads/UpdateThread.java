@@ -84,7 +84,7 @@ public class UpdateThread extends BaseThread
     @Override
     protected void iteration()
     {
-        if (!MeshApplication.isMeshConnected())
+        if (!MeshApplication.isMeshConnected() || MeshApplication.getServerAddress() == null)
             return;
 
         long time = System.currentTimeMillis();
@@ -115,16 +115,11 @@ public class UpdateThread extends BaseThread
 			if (loc.hasAltitude())
 				message += "|alt:" + loc.getAccuracy();
 		}
-
-        try
-        {
+		try
+		{
             byte[] buf = message.getBytes();
-            updateSocket.send(new DatagramPacket(buf, buf.length, InetAddress.getByName(MeshApplication.getServerIPAddress()), MeshApplication.getServerPort()));
+            updateSocket.send(new DatagramPacket(buf, buf.length, MeshApplication.getServerAddress(), MeshApplication.getServerPort()));
             MeshApplication.clean(logContext());
-        }
-        catch (UnknownHostException e)
-        {
-            Logger.e(this,"Update failed; %s unknown",MeshApplication.getServerIPAddress());
         }
         catch (SocketException e)
         {

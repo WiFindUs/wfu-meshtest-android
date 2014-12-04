@@ -55,7 +55,7 @@ public class StatusFragment extends BaseFragment
 		changeServerButton = (Button)view.findViewById(R.id.server_change_button);
 		changeServerButton.setOnClickListener(changeServerClickListener);
 		server = (TextView)view.findViewById(R.id.field_mesh_server);
-		server.setText(getResources().getString(R.string.data_ip_port,MeshApplication.getServerIPAddress(),MeshApplication.getServerPort()));
+		server.setText(getResources().getString(R.string.data_host_port,MeshApplication.getServerHostName(),MeshApplication.getServerPort()));
         return view;
     }
 
@@ -155,7 +155,7 @@ public class StatusFragment extends BaseFragment
 			final EditText text = new EditText(StatusFragment.this.getActivity());
 			text.setRawInputType(InputType.TYPE_CLASS_TEXT);
 			text.setFilters(new InputFilter[] {new InputFilter.LengthFilter(22)});
-			text.setText(getResources().getString(R.string.data_ip_port, MeshApplication.getServerIPAddress(), MeshApplication.getServerPort()));
+			text.setText(getResources().getString(R.string.data_host_port,MeshApplication.getServerHostName(),MeshApplication.getServerPort()));
 
 			//build the dialog
 			AlertDialog.Builder builder = new AlertDialog.Builder(StatusFragment.this.getActivity());
@@ -167,7 +167,7 @@ public class StatusFragment extends BaseFragment
 					public void onClick(DialogInterface di, int i)
 					{
 						//parse using regex
-						Matcher match = Static.PATTERN_IP_ADDRESS.matcher(text.getText().toString().trim());
+						Matcher match = Static.PATTERN_HOSTNAME_PORT.matcher(text.getText().toString().trim());
 						if (!match.find())
 						{
 							Toast.makeText(StatusFragment.this.getActivity(),
@@ -176,8 +176,8 @@ public class StatusFragment extends BaseFragment
 							return;
 						}
 
-						//get ip address
-						String ipAddress = match.group(1);
+						//get hostname
+						String hostname = match.group(1);
 
 						//get port
 						int port = -1;
@@ -199,9 +199,9 @@ public class StatusFragment extends BaseFragment
 						}
 
 						//update app
-						if (MeshApplication.setServer(ipAddress, port))
+						if (MeshApplication.setServer(StatusFragment.this.getActivity(), hostname, port))
 						{
-							server.setText(getResources().getString(R.string.data_ip_port, MeshApplication.getServerIPAddress(), MeshApplication.getServerPort()));
+							server.setText(getResources().getString(R.string.data_host_port, MeshApplication.getServerHostName(), MeshApplication.getServerPort()));
 							Toast.makeText(StatusFragment.this.getActivity(),
 								getResources().getString(R.string.status_change_server_ok),
 								Toast.LENGTH_LONG).show();
