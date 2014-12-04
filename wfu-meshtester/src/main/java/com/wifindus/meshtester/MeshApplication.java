@@ -194,7 +194,7 @@ public class MeshApplication extends Application
 
 		if (changeHost)
 		{
-			InetAddress newAddress = null;
+			InetAddress newAddress;
 			try
 			{
 				newAddress = InetAddress.getByName(hostname);
@@ -374,7 +374,8 @@ public class MeshApplication extends Application
                 meshHostName = "";
             }
         }
-        else {
+        else
+		{
             meshInetAddress = null;
             meshHostName = "";
         }

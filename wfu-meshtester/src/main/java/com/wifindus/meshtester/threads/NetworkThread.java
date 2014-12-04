@@ -66,7 +66,7 @@ public class NetworkThread extends BaseThread
 	{
 		float battery = MeshApplication.getBatteryPercentage();
 		return (battery >= 0.75f || MeshApplication.isBatteryCharging()) ? 10000 :
-			(battery >= 0.25 ? 30000 : 60000);
+			(battery >= 0.25 ? 20000 : 40000);
 	}
 
     @Override
@@ -290,8 +290,9 @@ public class NetworkThread extends BaseThread
 					Logger.i(this, "Network connection OK.");
 				else
 					Logger.e(this, "Network connection lost.");
-				MeshApplication.updateMeshConnected(logContext(), connected);
 			}
+			MeshApplication.updateMeshConnected(logContext(), connected);
+			MeshApplication.updateMeshAddress(logContext(), -1);
 		}
     }
 

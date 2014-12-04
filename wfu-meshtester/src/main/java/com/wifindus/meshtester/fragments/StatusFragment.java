@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,7 +30,7 @@ public class StatusFragment extends BaseFragment
 {
     private TextView connectionState, connectedSince, meshAddress,
             node, nodeAddress, id, uptime, location, lastCleaned, battery, server;
-	private Button changeServerButton;
+	private CheckBox forceMeshNetwork;
     private Handler timerHandler = new Handler();
     private static final String TAG = StatusFragment.class.getName();
 
@@ -42,6 +43,7 @@ public class StatusFragment extends BaseFragment
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
     {
         View view = inflater.inflate(R.layout.fragment_status, container, false);
+
         connectionState = (TextView)view.findViewById(R.id.field_mesh_state);
         connectedSince = (TextView)view.findViewById(R.id.field_mesh_uptime);
         meshAddress = (TextView)view.findViewById(R.id.field_mesh_ip_address);
@@ -52,10 +54,16 @@ public class StatusFragment extends BaseFragment
         location = (TextView)view.findViewById(R.id.field_location);
         lastCleaned = (TextView)view.findViewById(R.id.field_mesh_last_cleaned);
 		battery = (TextView)view.findViewById(R.id.field_battery);
-		changeServerButton = (Button)view.findViewById(R.id.server_change_button);
-		changeServerButton.setOnClickListener(changeServerClickListener);
+
 		server = (TextView)view.findViewById(R.id.field_mesh_server);
 		server.setText(getResources().getString(R.string.data_host_port,MeshApplication.getServerHostName(),MeshApplication.getServerPort()));
+		server.setClickable(true);
+		server.setOnClickListener(changeServerClickListener);
+
+		forceMeshNetwork = (CheckBox)view.findViewById(R.id.network_change_force_mesh);
+		forceMeshNetwork.setChecked(MeshApplication.getForceMeshConnection());
+		forceMeshNetwork.setOnClickListener(forceMeshNetworkClickListener);
+
         return view;
     }
 
@@ -144,11 +152,22 @@ public class StatusFragment extends BaseFragment
         }
     };
 
+	private View.OnClickListener forceMeshNetworkClickListener = new View.OnClickListener()
+	{
+		@Override
+		public void onClick(View view)
+		{
+			if (view != forceMeshNetwork)
+				return;
+			MeshApplication.setForceMeshConnection(forceMeshNetwork.isChecked());
+		}
+	};
+
 	private View.OnClickListener changeServerClickListener = new View.OnClickListener() {
 		@Override
 		public void onClick(View view)
 		{
-			if (view != changeServerButton)
+			if (view != server)
 				return;
 
 			//create text edit box

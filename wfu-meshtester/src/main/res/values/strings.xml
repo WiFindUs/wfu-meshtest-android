@@ -46,6 +46,7 @@
     <string name="status_change_server_invalid_format">The provided Hostname:Port pair was improperly formatted.</string>
     <string name="status_change_server_invalid_port">The provided port was invalid; must be between 1024 and 65535.</string>
     <string name="status_change_server_ok">The server address was changed successfully.</string>
+    <string name="status_force_mesh">Force mesh wifi:</string>
 
 
 
