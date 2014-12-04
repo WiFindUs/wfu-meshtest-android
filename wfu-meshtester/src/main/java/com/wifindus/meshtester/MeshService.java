@@ -29,7 +29,6 @@ public class MeshService extends Service implements LogSender
     private volatile boolean ready = false;
 	private volatile MeshServiceReceiver meshServiceReceiver = null;
 	private volatile BatteryLevelReceiver batteryLevelReceiver = null;
-	private volatile long lastBatteryUpdate = -1;
 
     public MeshService()
     {
@@ -151,10 +150,6 @@ public class MeshService extends Service implements LogSender
 		@Override
 		public void onReceive(Context context, Intent intent)
 		{
-			if ((System.currentTimeMillis() - lastBatteryUpdate) < 5000)
-				return;
-
-			lastBatteryUpdate = System.currentTimeMillis();
 			int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
 			int status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
 			int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
