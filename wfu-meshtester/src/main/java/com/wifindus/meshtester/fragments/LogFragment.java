@@ -62,7 +62,9 @@ public class LogFragment extends BaseFragment
         StringBuilder sb = new StringBuilder();
         for (LoggerItem item : items)
         {
-            switch (item.getLevel())
+            sb.append("<font color=\"#AAAAAA\"><i>"+ item.getTimestampString() +"</i></font> ");
+
+			switch (item.getLevel())
             {
                 case Logger.LOG_ERROR: sb.append("<b><font color=\"#CC0000\">"); break;
                 case Logger.LOG_WARNING: sb.append("<font color=\"#FF9933\">"); break;
