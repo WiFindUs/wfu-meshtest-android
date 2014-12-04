@@ -79,7 +79,7 @@ public class LocationThread extends BaseThread implements LocationListener
     public long timeoutLength()
     {
         float battery = MeshApplication.getBatteryPercentage();
-		return (battery >= 0.75f || MeshApplication.getBatteryCharging()) ? 1000 :
+		return (battery >= 0.75f || MeshApplication.isBatteryCharging()) ? 1000 :
 			(battery >= 0.25 ? 2500 : 5000);
     }
 
