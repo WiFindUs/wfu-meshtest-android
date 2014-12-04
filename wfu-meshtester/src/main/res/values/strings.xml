@@ -13,6 +13,7 @@
     <string name="data_latlong">%1$f°, %2$f°</string>
     <string name="data_node">%1$d (%2$s)</string>
     <string name="data_battery">%1$d%% %2$s</string>
+    <string name="data_ip_port">%1$s:%2$d</string>
 
     <!-- user page -->
     <string name="user_current">Current User</string>
@@ -39,6 +40,14 @@
     <string name="status_hash">Hash:</string>
     <string name="status_last_cleaned">Update sent:</string>
     <string name="status_battery">Battery:</string>
+    <string name="status_server">Server:</string>
+    <string name="status_change_server">Change server</string>
+    <string name="status_change_server_help_text">Enter the IP address and port:</string>
+    <string name="status_change_server_invalid_format">The provided Address:Port pair was improperly formatted.</string>
+    <string name="status_change_server_invalid_port">The provided port was invalid; must be between 1024 and 65535.</string>
+    <string name="status_change_server_ok">The server address was changed successfully.</string>
+
+
 
 
     <!-- ping page -->
@@ -48,5 +57,6 @@
     <string name="ping_results">Results</string>
     <string name="ping_start">Start pinging</string>
     <string name="ping_stop">Stop pinging</string>
+
 
 </resources>

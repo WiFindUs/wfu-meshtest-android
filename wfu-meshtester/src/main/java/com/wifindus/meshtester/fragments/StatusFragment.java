@@ -1,24 +1,35 @@
 package com.wifindus.meshtester.fragments;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.text.InputFilter;
+import android.text.InputType;
 import android.text.format.Formatter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.wifindus.logs.Logger;
 import com.wifindus.meshtester.MeshApplication;
 import com.wifindus.meshtester.R;
 import com.wifindus.meshtester.Static;
+
+import java.util.regex.Matcher;
 
 
 public class StatusFragment extends BaseFragment
 {
     private TextView connectionState, connectedSince, meshAddress,
-            node, nodeAddress, id, uptime, location, lastCleaned, battery;
+            node, nodeAddress, id, uptime, location, lastCleaned, battery, server;
+	private Button changeServerButton;
     private Handler timerHandler = new Handler();
     private static final String TAG = StatusFragment.class.getName();
 
@@ -41,6 +52,10 @@ public class StatusFragment extends BaseFragment
         location = (TextView)view.findViewById(R.id.field_location);
         lastCleaned = (TextView)view.findViewById(R.id.field_mesh_last_cleaned);
 		battery = (TextView)view.findViewById(R.id.field_battery);
+		changeServerButton = (Button)view.findViewById(R.id.server_change_button);
+		changeServerButton.setOnClickListener(changeServerClickListener);
+		server = (TextView)view.findViewById(R.id.field_mesh_server);
+		server.setText(getResources().getString(R.string.data_ip_port,MeshApplication.getServerIPAddress(),MeshApplication.getServerPort()));
         return view;
     }
 
@@ -89,7 +104,7 @@ public class StatusFragment extends BaseFragment
 
 		battery.setText(getResources().getString(R.string.data_battery,
 			(int)(MeshApplication.getBatteryPercentage()*100.0f),
-				MeshApplication.getBatteryCharging() ? "(charging)" : ""));
+				MeshApplication.isBatteryCharging() ? "(charging)" : ""));
 
         updateUptime();
     }
@@ -128,4 +143,73 @@ public class StatusFragment extends BaseFragment
             timerHandler.postDelayed(this, 250);
         }
     };
+
+	private View.OnClickListener changeServerClickListener = new View.OnClickListener() {
+		@Override
+		public void onClick(View view)
+		{
+			if (view != changeServerButton)
+				return;
+
+			//create text edit box
+			final EditText text = new EditText(StatusFragment.this.getActivity());
+			text.setRawInputType(InputType.TYPE_CLASS_TEXT);
+			text.setFilters(new InputFilter[] {new InputFilter.LengthFilter(22)});
+			text.setText(getResources().getString(R.string.data_ip_port, MeshApplication.getServerIPAddress(), MeshApplication.getServerPort()));
+
+			//build the dialog
+			AlertDialog.Builder builder = new AlertDialog.Builder(StatusFragment.this.getActivity());
+			builder.setTitle(R.string.status_change_server)
+				.setMessage(R.string.status_change_server_help_text)
+				.setView(text)
+				.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener()
+				{
+					public void onClick(DialogInterface di, int i)
+					{
+						//parse using regex
+						Matcher match = Static.PATTERN_IP_ADDRESS.matcher(text.getText().toString().trim());
+						if (!match.find())
+						{
+							Toast.makeText(StatusFragment.this.getActivity(),
+								getResources().getString(R.string.status_change_server_invalid_format),
+								Toast.LENGTH_LONG).show();
+							return;
+						}
+
+						//get ip address
+						String ipAddress = match.group(1);
+
+						//get port
+						int port = -1;
+						if (match.groupCount() >= 3)
+						{
+							try
+							{
+								port = Integer.parseInt(match.group(2));
+							} catch (NumberFormatException ex) { }
+						}
+						if (port < 0)
+							port = 33339;
+						else if (port < 1024 || port > 65535)
+						{
+							Toast.makeText(StatusFragment.this.getActivity(),
+								getResources().getString(R.string.status_change_server_invalid_port),
+								Toast.LENGTH_LONG).show();
+							return;
+						}
+
+						//update app
+						if (MeshApplication.setServer(ipAddress, port))
+						{
+							server.setText(getResources().getString(R.string.data_ip_port, MeshApplication.getServerIPAddress(), MeshApplication.getServerPort()));
+							Toast.makeText(StatusFragment.this.getActivity(),
+								getResources().getString(R.string.status_change_server_ok),
+								Toast.LENGTH_LONG).show();
+						}
+					}
+				})
+				.setNegativeButton(android.R.string.cancel, null)
+				.show();
+		}
+	};
 }
