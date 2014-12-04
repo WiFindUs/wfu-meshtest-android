@@ -23,8 +23,6 @@ public class UpdateThread extends BaseThread
 {
     private static final String TAG = UpdateThread.class.getName();
     private volatile DatagramSocket updateSocket;
-    private static final String WIFI_SERVER = "192.168.1.2";
-    private static final int WIFI_SERVER_PORT = 33339;
     private static String versionString;
 
     /////////////////////////////////////////////////////////////////////
@@ -60,7 +58,7 @@ public class UpdateThread extends BaseThread
 	public long timeoutLength()
 	{
 		float battery = MeshApplication.getBatteryPercentage();
-		return (battery >= 0.75f || MeshApplication.getBatteryCharging()) ? 1000 :
+		return (battery >= 0.75f || MeshApplication.isBatteryCharging()) ? 1000 :
 			(battery >= 0.25 ? 2500 : 5000);
 	}
 
@@ -106,7 +104,7 @@ public class UpdateThread extends BaseThread
 				Long.toHexString(MeshApplication.getUserID()).toUpperCase()
 				: "-1")
 			+ "|batt:" + Static.percentageFormat.format(MeshApplication.getBatteryPercentage())
-			+ "|chg:" + (MeshApplication.getBatteryCharging() ? "1" : "0");
+			+ "|chg:" + (MeshApplication.isBatteryCharging() ? "1" : "0");
 		Location loc = MeshApplication.getLocation();
 		if (loc != null)
 		{
@@ -121,12 +119,12 @@ public class UpdateThread extends BaseThread
         try
         {
             byte[] buf = message.getBytes();
-            updateSocket.send(new DatagramPacket(buf, buf.length, InetAddress.getByName(WIFI_SERVER), WIFI_SERVER_PORT));
+            updateSocket.send(new DatagramPacket(buf, buf.length, InetAddress.getByName(MeshApplication.getServerIPAddress()), MeshApplication.getServerPort()));
             MeshApplication.clean(logContext());
         }
         catch (UnknownHostException e)
         {
-            Logger.e(this,"Update failed; %s unknown",WIFI_SERVER);
+            Logger.e(this,"Update failed; %s unknown",MeshApplication.getServerIPAddress());
         }
         catch (SocketException e)
         {
