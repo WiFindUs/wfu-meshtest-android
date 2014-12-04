@@ -20,15 +20,25 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.text.DecimalFormat;
 import java.util.Random;
+import java.util.regex.Pattern;
 
 /**
  * Created by marzer on 25/04/2014.
  */
 public abstract class Static
 {
-    public static final Random random = new Random();
+	public static final Random random = new Random();
     public static final DecimalFormat locationFormat = new DecimalFormat("#.########");
 	public static final DecimalFormat percentageFormat = new DecimalFormat("#.##");
+	public static final Pattern PATTERN_IP_ADDRESS = Pattern.compile("\\s*"
+		//octets
+		+"((?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)[.]"
+		+"(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)[.]"
+		+"(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)[.]"
+		+"(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))"
+		//port (optional)
+		+ "([:][0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])?"
+		+"\\s*");
 
     /**
      * Detect if the system's Airplane mode is turned on.
@@ -204,9 +214,10 @@ public abstract class Static
         deleteRecursive(fileOrDirectory, true);
     }
 
-    public static final String formatTimer(long milliseconds)
+    public static final String formatTimer(long milliseconds, boolean includeMilliseconds)
     {
         String suffix = "";
+		boolean isms = false;
         if (milliseconds > 86400000) //days
         {
             milliseconds /= 86400000;
@@ -228,9 +239,19 @@ public abstract class Static
             suffix = "second";
         }
         else
-            suffix = "millisecond";
-        return "" + milliseconds + " " + suffix + (milliseconds > 1 ? "s" : "");
+		{
+			suffix = "millisecond";
+			isms = true;
+		}
+        return (!includeMilliseconds && isms ? "less than a second" :
+			"" + milliseconds + " " + suffix + (milliseconds > 1 ? "s" : "")
+			 );
     }
+
+	public static final String formatTimer(long milliseconds)
+	{
+		return formatTimer(milliseconds, false);
+	}
 
     public static final void broadcastSimpleIntent(Context context, String action)
     {
@@ -241,10 +262,13 @@ public abstract class Static
         context.sendBroadcast(intent);
     }
 
-    public static final String ping(String address) throws IOException
+    public static final String ping(String address, int count) throws IOException
     {
-        Process process = Runtime.getRuntime().exec(
-                "/system/bin/ping -c 10 -i 0.2 -n -q " + address);
+        if (count < 0 || count > 50)
+			count = 10;
+
+		Process process = Runtime.getRuntime().exec(
+                "/system/bin/ping -c "+count+" -i 0.2 -n -q " + address);
         BufferedReader reader = new BufferedReader(new InputStreamReader(
                 process.getInputStream()));
         int i;
@@ -256,4 +280,29 @@ public abstract class Static
 
         return output.toString();
     }
+
+	public static final int wifiSignalStrengthTier(int level)
+	{
+		if (level > -30)
+			return 0;
+		else if (level > -50)
+			return 9;
+		else if (level > -55)
+			return 8;
+		else if (level > -61)
+			return 7;
+		else if (level > -65)
+			return 6;
+		else if (level > -70)
+			return 5;
+		else if (level > -75)
+			return 4;
+		else if (level > -80)
+			return 3;
+		else if (level > -86)
+			return 2;
+		else if (level > -90)
+			return 1;
+		return 0;
+	}
 }
