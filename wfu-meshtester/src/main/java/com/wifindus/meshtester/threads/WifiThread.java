@@ -12,6 +12,7 @@ import android.net.wifi.WifiManager;
 import com.wifindus.BaseThread;
 import com.wifindus.meshtester.MeshApplication;
 import com.wifindus.logs.Logger;
+import com.wifindus.meshtester.Static;
 
 import java.util.List;
 
@@ -66,7 +67,7 @@ public class WifiThread extends BaseThread
 	public long timeoutLength()
 	{
 		float battery = MeshApplication.getBatteryPercentage();
-		return (battery >= 0.75f || MeshApplication.getBatteryCharging()) ? 10000 :
+		return (battery >= 0.75f || MeshApplication.isBatteryCharging()) ? 10000 :
 			(battery >= 0.25 ? 30000 : 60000);
 	}
 
@@ -90,7 +91,7 @@ public class WifiThread extends BaseThread
     @Override
     protected void iteration()
     {
-        long count = 0;
+		long count = 0;
 
         //ensure wifi is enabled
         int wifiManagerState = wifiManager.getWifiState();
@@ -174,7 +175,8 @@ public class WifiThread extends BaseThread
 			return;
 
 		//scan for new ap's
-		Logger.i(this, "Scanning local AP's...");
+		if (!MeshApplication.isMeshConnected())
+			Logger.i(this, "Scanning local AP's...");
 		scanResultsAvailable = false;
 		wifiManager.startScan();
 		count = 0;
@@ -199,13 +201,18 @@ public class WifiThread extends BaseThread
 			return;
 		}
 		ScanResult bestFit = null;
+		int bestTier = 0;
 		for(ScanResult result : scanResults)
 		{
 			if (result.SSID == null || result.SSID.compareTo(WIFI_SSID) != 0)
 				continue;
-			//todo: threshold comparison
-			if (bestFit == null || (result.level - bestFit.level) > 3)
+
+			int resultTier = 0;
+			if (bestFit == null || (resultTier = Static.wifiSignalStrengthTier(result.level)) > bestTier)
+			{
 				bestFit = result;
+				bestTier = resultTier;
+			}
 		}
 		if (bestFit == null)
 		{
@@ -220,7 +227,8 @@ public class WifiThread extends BaseThread
 		activeNetwork = connectivityManager.getActiveNetworkInfo();
 		if (activeNetwork == null || activeNetwork.getType() != ConnectivityManager.TYPE_WIFI)
 		{
-			Logger.i(this, "AP found, connecting...");
+			if (!MeshApplication.isMeshConnected())
+				Logger.i(this, "AP found, connecting...");
 			MeshApplication.updateMeshConnected(logContext(), false);
 		}
 		else
@@ -230,9 +238,10 @@ public class WifiThread extends BaseThread
 			if (wifiInfo.getSSID().compareTo("\"" + WIFI_SSID + "\"") == 0
 				&& wifiInfo.getBSSID().compareTo(bestFit.BSSID) == 0)
 			{
+				if (!MeshApplication.isMeshConnected())
+					Logger.i(this, "Already connected to best AP.");
 				MeshApplication.updateMeshConnected(logContext(), true);
 				MeshApplication.updateMeshAddress(logContext(), wifiInfo.getIpAddress());
-				Logger.i(this, "Already connected to best AP.");
 				return;
 			}
 
@@ -267,7 +276,8 @@ public class WifiThread extends BaseThread
 			}
 			wifiInfo = wifiManager.getConnectionInfo();
 		}
-		Logger.i(this, "Connected to mesh OK.");
+		if (!MeshApplication.isMeshConnected())
+			Logger.i(this, "Connected to mesh OK.");
 		MeshApplication.updateMeshAddress(logContext(), wifiInfo.getIpAddress());
 		MeshApplication.updateMeshConnected(logContext(), true);
     }
