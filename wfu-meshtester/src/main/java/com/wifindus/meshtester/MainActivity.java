@@ -106,7 +106,7 @@ public class MainActivity extends FragmentActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
+        //getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
@@ -126,10 +126,12 @@ public class MainActivity extends FragmentActivity
             Logger.clear();
             if (logFragment != null)
                 logFragment.clearLog();
-            Intent intent = new Intent(Intent.ACTION_MAIN);
+            /*Intent intent = new Intent(Intent.ACTION_MAIN);
             intent.addCategory(Intent.CATEGORY_HOME);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
+            */
+			this.finish();
             return true;
         }
         return super.onOptionsItemSelected(item);
