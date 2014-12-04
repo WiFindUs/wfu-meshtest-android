@@ -14,6 +14,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 /**
  * Created by marzer on 25/04/2014.
@@ -57,6 +58,8 @@ public class MeshApplication extends Application
     private static volatile String meshHostName = "";
     private static volatile int meshNodeNumber = 0;
     private static volatile long meshNodeID = -1;
+	private static volatile String serverIPAddress = "";
+	private static volatile int serverPort = -1;
 
     //pings
     private static volatile PingThread pingThread = null;
@@ -93,11 +96,18 @@ public class MeshApplication extends Application
         lastSignInTime = preferences.getLong("lastSignInTime", 0);
         if (userID > -1 && (System.currentTimeMillis() - lastSignInTime) > SIGNOUT_INVALID_TIME)
         {
-            userID = -1;
-            lastSignInTime = 0;
-            editor.putInt("userID", userID);
-            editor.putLong("lastSignInTime", lastSignInTime);
+            editor.putInt("userID", userID = -1);
+            editor.putLong("lastSignInTime", lastSignInTime = 0);
         }
+
+		//server IP address and port
+		serverIPAddress = preferences.getString("serverIPAddress", "");
+		if (serverIPAddress.length() == 0)
+			editor.putString("serverIPAddress", serverIPAddress = "192.168.1.1");
+		serverPort = preferences.getInt("serverPort", -1);
+		if (serverPort < 0)
+			editor.putInt("serverPort", serverPort = 33339);
+
         editor.commit();
     }
 
@@ -122,6 +132,35 @@ public class MeshApplication extends Application
     {
         return id;
     }
+
+	public static final int getServerPort()
+	{
+		return serverPort;
+	}
+
+	public static final String getServerIPAddress()
+	{
+		return serverIPAddress;
+	}
+
+	public static final boolean setServer(String ip, int port)
+	{
+		if (ip == null || ip.length() == 0
+			|| port < 1024 || port > 65535
+			|| (ip.compareTo(serverIPAddress) == 0
+				&& port == serverPort))
+			return false;
+
+		serverIPAddress = ip;
+		serverPort = port;
+
+		SharedPreferences.Editor editor = preferences.edit();
+		editor.putString("serverIPAddress", serverIPAddress);
+		editor.putInt("serverPort", serverPort);
+		editor.commit();
+
+		return true;
+	}
 
     public static final Location getLocation()
     {
@@ -173,7 +212,7 @@ public class MeshApplication extends Application
 
 	public static final float getBatteryPercentage() { return batteryPercentage; }
 
-	public static final boolean getBatteryCharging() { return batteryCharging; }
+	public static final boolean isBatteryCharging() { return batteryCharging; }
 
     public static final ConcurrentHashMap<Integer, PingResult> getNodePings()
     {
@@ -291,8 +330,11 @@ public class MeshApplication extends Application
 
 	public static void updateBatteryStats(Context context, float percentage, boolean charging)
 	{
-		if (percentage >= 0.0f)
-			batteryPercentage = percentage;
+		if ((int)(percentage * 100.0f) == (int)(batteryPercentage * 100.0f)
+			|| batteryCharging == charging)
+			return;
+
+		batteryPercentage = percentage;
 		batteryCharging = charging;
 		dirty = true;
 
