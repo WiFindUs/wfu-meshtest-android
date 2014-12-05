@@ -27,7 +27,6 @@ public class NetworkThread extends BaseThread
 {
     private static final String TAG = NetworkThread.class.getName();
     private volatile boolean hasWifi = false;
-    private volatile NetworkInfo wifiNetwork;
     private volatile WifiInfo wifiInfo;
     private volatile WifiManager wifiManager = null;
     private volatile ConnectivityManager connectivityManager = null;
@@ -70,9 +69,16 @@ public class NetworkThread extends BaseThread
     @Override
 	public long timeoutLength()
 	{
-		float battery = MeshApplication.getBatteryPercentage();
-		return (battery >= 0.75f || MeshApplication.isBatteryCharging()) ? 10000 :
-			(battery >= 0.25 ? 15000 : 30000);
+		long time = MeshApplication.isMeshConnected() ? 30000 : 10000;
+		if (!MeshApplication.isBatteryCharging())
+		{
+			float battery = MeshApplication.getBatteryPercentage();
+			if (battery <= 0.5f)
+				time = (3*time)/2;
+			if (battery <= 0.25f)
+				time = (3*time)/2;
+		}
+		return time;
 	}
 
     @Override
@@ -326,22 +332,29 @@ public class NetworkThread extends BaseThread
             wifiLock.release();
     }
 
-	private boolean waitForWifiConnection()
+	private boolean waitForConnection(int type)
 	{
-		wifiNetwork = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-		if (wifiNetwork != null && wifiNetwork.isConnectedOrConnecting())
+		NetworkInfo network = type < 0 ? connectivityManager.getActiveNetworkInfo() :
+			connectivityManager.getNetworkInfo(type);
+		if (network != null && network.isConnectedOrConnecting())
 		{
 			Logger.i(this, "Waiting for connection...");
-			while (wifiNetwork != null && !wifiNetwork.isConnected())
+			while (network != null && !network.isConnected())
 			{
 				safesleep(1000);
 				if (isCancelled())
 					return false;
-				wifiNetwork = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-				if (wifiNetwork == null || !wifiNetwork.isConnectedOrConnecting())
+				network = type < 0 ? connectivityManager.getActiveNetworkInfo() :
+					connectivityManager.getNetworkInfo(type);
+				if (network == null || !network.isConnectedOrConnecting())
 					break;
 			}
 		}
-		return wifiNetwork != null && wifiNetwork.isConnected();
+		return network != null && network.isConnected();
+	}
+
+	private boolean waitForWifiConnection()
+	{
+		return waitForConnection(ConnectivityManager.TYPE_WIFI);
 	}
 }
