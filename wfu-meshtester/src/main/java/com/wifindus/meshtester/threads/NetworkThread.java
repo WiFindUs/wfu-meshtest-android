@@ -12,6 +12,8 @@ import android.net.wifi.WifiManager;
 import com.wifindus.BaseThread;
 import com.wifindus.meshtester.MeshApplication;
 import com.wifindus.logs.Logger;
+import com.wifindus.meshtester.SignalStrengthAnalyzer;
+import com.wifindus.meshtester.SignalStrengthData;
 import com.wifindus.meshtester.Static;
 
 import java.util.HashMap;
@@ -25,7 +27,7 @@ public class NetworkThread extends BaseThread
 {
     private static final String TAG = NetworkThread.class.getName();
     private volatile boolean hasWifi = false;
-    private volatile NetworkInfo activeNetwork;
+    private volatile NetworkInfo wifiNetwork;
     private volatile WifiInfo wifiInfo;
     private volatile WifiManager wifiManager = null;
     private volatile ConnectivityManager connectivityManager = null;
@@ -103,6 +105,7 @@ public class NetworkThread extends BaseThread
 			if (wifiManagerState != WifiManager.WIFI_STATE_ENABLED)
 			{
 				MeshApplication.updateMeshConnected(logContext(), false);
+				MeshApplication.updateMeshAddress(logContext(), -1);
 				if (wifiManagerState != WifiManager.WIFI_STATE_ENABLING)
 				{
 					wifiManager.setWifiEnabled(true);
@@ -116,12 +119,11 @@ public class NetworkThread extends BaseThread
 							Logger.e(this, "Error re-enabling WiFi.");
 							return;
 						}
+						if (isCancelled())
+							return;
 					}
 				}
 			}
-
-			if (isCancelled())
-				return;
 
 			//acquire wifi lock
 			if (wifiLock == null)
@@ -178,25 +180,30 @@ public class NetworkThread extends BaseThread
 			if (isCancelled())
 				return;
 
-			//scan for new ap's
+			//get our current network information
+			boolean onWiFindUsAP = false;
+			if (waitForWifiConnection())
+			{
+				wifiInfo = wifiManager.getConnectionInfo();
+				Logger.i(this, "Current Network: " + wifiInfo.getSSID());
+				Logger.i(this, "Current AP: " + wifiInfo.getBSSID());
+				onWiFindUsAP = wifiInfo.getSSID().compareTo("\"" + WIFI_SSID + "\"") == 0;
+			}
+
+			//scan for wifindus ap's
             if (!MeshApplication.isMeshConnected())
                 Logger.i(this, "Scanning local AP's...");
-            Map<String, Integer> signalStrengths = new HashMap<String, Integer>();
+			SignalStrengthAnalyzer analyzer = new SignalStrengthAnalyzer(SCAN_RUNS);
             for (int i = 0; i < SCAN_RUNS; i++)
             {
                 scanResultsAvailable = false;
                 wifiManager.startScan();
-                count = 0;
                 while (!scanResultsAvailable) //set by broadcast receiver in service
                 {
                     safesleep(1000);
-                    if (++count >= 15) {
-                        Logger.e(this, "AP scan timed out.");
-                        return;
-                    }
+					if (isCancelled())
+						return;
                 }
-                if (isCancelled())
-                    return;
 
                 //process scan results, looking for WFU network AP's
                 List<ScanResult> scanResults = wifiManager.getScanResults();
@@ -204,13 +211,9 @@ public class NetworkThread extends BaseThread
                     continue;
                 for (ScanResult result : scanResults)
                 {
-                    if (result.SSID == null || result.SSID.compareTo(WIFI_SSID) != 0 || result.level > -30)
+                    if (result.SSID == null || result.SSID.compareTo(WIFI_SSID) != 0)
                         continue;
-                    int str = (signalStrengths.containsKey(result.BSSID) ? signalStrengths.get(result.BSSID) : 0)
-                            + result.level;
-                    if (i == (SCAN_RUNS - 1))
-                        str /= SCAN_RUNS;
-                    signalStrengths.put(result.BSSID, str);
+					analyzer.addSample(result.BSSID,i,result.level);
                 }
 
                 if (i < (SCAN_RUNS-1))
@@ -219,97 +222,84 @@ public class NetworkThread extends BaseThread
                 if (isCancelled())
                     return;
             }
-            if (signalStrengths.size() == 0)
-            {
-                Logger.e(this, "No WiFindUs AP's found.");
-                return;
-            }
 
-            //compare scan results to find best fit
-			String bestFit = null;
-			int bestTier = 0;
-            for (Map.Entry<String, Integer> entry : signalStrengths.entrySet())
-            {
-				int resultTier = 0;
-				if (bestFit == null || (resultTier = Static.wifiSignalStrengthTier(entry.getValue())) > bestTier)
+			//analyze the data
+			SignalStrengthData bestAP = analyzer.analyze().getBest();
+			Logger.i(this, analyzer.toString());
+
+			//if we're on a wfu ap, compare signal strengths
+			if (onWiFindUsAP)
+			{
+				SignalStrengthData currentAP = analyzer.getByBSSID(wifiInfo.getBSSID());
+				if (currentAP == bestAP || currentAP.getMean() <= 70 || currentAP.getTier() >= bestAP.getTier())
 				{
-					bestFit = entry.getKey();
-					bestTier = resultTier;
-				}
-
-                Logger.i(this, entry.getKey() + ": " + entry.getValue());
-			}
-			if (bestFit == null)
-			{
-				Logger.e(this, "No WiFindUs AP's found.");
-				return;
-			}
-
-			if (isCancelled())
-				return;
-
-			//check current connection
-            boolean activeNetworkIsWifindUs = false;
-            activeNetwork = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-			if (activeNetwork == null)
-			{
-				if (!MeshApplication.isMeshConnected())
-					Logger.i(this, "AP found, connecting...");
-				MeshApplication.updateMeshConnected(logContext(), false);
-			} else
-			{
-				wifiInfo = wifiManager.getConnectionInfo();
-                Logger.i(this, "Current AP: " + wifiInfo.getBSSID());
-                activeNetworkIsWifindUs = wifiInfo.getSSID().compareTo("\"" + WIFI_SSID + "\"") == 0;
-
-				if (activeNetworkIsWifindUs && wifiInfo.getBSSID().compareTo(bestFit) == 0)
-				{
-					if (!MeshApplication.isMeshConnected())
-						Logger.i(this, "Already connected to best AP.");
+					Logger.i(this, "Current AP OK ("+currentAP.getMean()+"dbm).");
 					MeshApplication.updateMeshConnected(logContext(), true);
 					MeshApplication.updateMeshAddress(logContext(), wifiInfo.getIpAddress());
 					return;
 				}
 
-				Logger.i(this, "Better AP found, migrating...");
+				Logger.i(this, "Better AP found ("+bestAP.getMean()+"dbm), migrating...");
+			}
+			else
+			{
+				if (bestAP == null)
+				{
+					Logger.e(this, "No WiFindUs AP's found.");
+					MeshApplication.updateMeshConnected(logContext(), false);
+					MeshApplication.updateMeshAddress(logContext(), -1);
+					return;
+				}
 
-				MeshApplication.updateMeshConnected(logContext(), false);
+				Logger.i(this, "WiFindUs AP found ("+bestAP.getMean()+"dbm), connecting...");
+
+				wifiManager.disconnect();
+				safesleep(1000);
+				if (isCancelled())
+					return;
 			}
 
-			if (isCancelled())
-				return;
-
-			//migrate to new AP
-            if(!activeNetworkIsWifindUs)
-                wifiManager.disconnect();
-			wifindus_public.BSSID = bestFit;
+			//perform the migration
+			wifindus_public.BSSID = bestAP.getBSSID();
 			wifiManager.updateNetwork(wifindus_public);
 			wifiManager.enableNetwork(wifindus_public.networkId, false);
 			wifiManager.saveConfiguration();
-            if(!activeNetworkIsWifindUs)
-            {
-                wifiManager.reconnect();
 
-                //wait and confirm
-                count = 0;
-                wifiInfo = wifiManager.getConnectionInfo();
-                while (wifiInfo == null
-                        || wifiInfo.getSSID().compareTo("\"" + WIFI_SSID + "\"") != 0
-                        || wifiInfo.getBSSID().compareTo(bestFit) != 0) {
-                    safesleep(1000);
-                    if (++count >= 15) {
-                        Logger.w(this, "Migration check timed out.");
-                        MeshApplication.updateMeshConnected(logContext(), false);
-                        return;
-                    }
-                    wifiInfo = wifiManager.getConnectionInfo();
-                }
-            }
+            if(!onWiFindUsAP)
+			{
+				wifiManager.reconnect();
+				safesleep(1000);
+				if (isCancelled())
+					return;
+			}
 
-			if (!MeshApplication.isMeshConnected())
-				Logger.i(this, "Connected to mesh OK.");
-			MeshApplication.updateMeshAddress(logContext(), wifiInfo.getIpAddress());
-			MeshApplication.updateMeshConnected(logContext(), true);
+			//watch the migration
+			if (waitForWifiConnection())
+			{
+				wifiInfo = wifiManager.getConnectionInfo();
+				if (wifiInfo != null && wifiInfo.getSSID().compareTo("\"" + WIFI_SSID + "\"") != 0)
+				{
+					if (bestAP.getBSSID().compareTo(wifiInfo.getBSSID()) == 0)
+						Logger.i(this, (onWiFindUsAP ? "Migrated" : "Connected") + " OK.");
+					else
+						Logger.w(this, (onWiFindUsAP ? "Migrated" : "Connected") + " OK, but different AP?");
+					MeshApplication.updateMeshAddress(logContext(), wifiInfo.getIpAddress());
+					MeshApplication.updateMeshConnected(logContext(), true);
+				}
+				else
+				{
+					if (!MeshApplication.isMeshConnected())
+						Logger.e(this, "Connected to mesh failed!");
+					MeshApplication.updateMeshAddress(logContext(), -1);
+					MeshApplication.updateMeshConnected(logContext(), false);
+				}
+			}
+			else
+			{
+				Logger.e(this, "Wifi reconnection failed.");
+				MeshApplication.updateMeshConnected(logContext(), false);
+				MeshApplication.updateMeshAddress(logContext(), -1);
+			}
 		}
 		else
 		{
@@ -335,4 +325,23 @@ public class NetworkThread extends BaseThread
         if (wifiLock != null && wifiLock.isHeld())
             wifiLock.release();
     }
+
+	private boolean waitForWifiConnection()
+	{
+		wifiNetwork = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+		if (wifiNetwork != null && wifiNetwork.isConnectedOrConnecting())
+		{
+			Logger.i(this, "Waiting for connection...");
+			while (wifiNetwork != null && !wifiNetwork.isConnected())
+			{
+				safesleep(1000);
+				if (isCancelled())
+					return false;
+				wifiNetwork = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+				if (wifiNetwork == null || !wifiNetwork.isConnectedOrConnecting())
+					break;
+			}
+		}
+		return wifiNetwork != null && wifiNetwork.isConnected();
+	}
 }

@@ -286,19 +286,4 @@ public abstract class Static
 
         return output.toString();
     }
-
-	public static final int wifiSignalStrengthTier(int level)
-	{
-		if (level > -30)
-			return 5;
-		else if (level > -67)
-			return 4;
-		else if (level > -70)
-			return 3;
-		else if (level > -80)
-			return 2;
-		else if (level > -90)
-			return 1;
-		return 0;
-	}
 }
