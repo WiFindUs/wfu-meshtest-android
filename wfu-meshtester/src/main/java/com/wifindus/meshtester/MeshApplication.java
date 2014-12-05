@@ -49,7 +49,7 @@ public class MeshApplication extends Application
     private static volatile long lastSignInTime = 0;
     private static volatile ConcurrentHashMap<Integer, String> userNames
         = new ConcurrentHashMap<Integer, String>();
-	private static volatile float batteryPercentage = 1.0f;
+	private static volatile float batteryPercentage = 0.5f;
 	private static volatile boolean batteryCharging = false;
 
     //mesh status
