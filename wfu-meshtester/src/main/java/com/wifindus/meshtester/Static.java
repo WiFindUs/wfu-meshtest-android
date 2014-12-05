@@ -290,22 +290,12 @@ public abstract class Static
 	public static final int wifiSignalStrengthTier(int level)
 	{
 		if (level > -30)
-			return 0;
-		else if (level > -50)
-			return 9;
-		else if (level > -55)
-			return 8;
-		else if (level > -61)
-			return 7;
-		else if (level > -65)
-			return 6;
-		else if (level > -70)
 			return 5;
-		else if (level > -75)
+		else if (level > -67)
 			return 4;
-		else if (level > -80)
+		else if (level > -70)
 			return 3;
-		else if (level > -86)
+		else if (level > -80)
 			return 2;
 		else if (level > -90)
 			return 1;
