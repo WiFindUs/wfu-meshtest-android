@@ -19,6 +19,7 @@ import com.wifindus.meshtester.Static;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 
 /**
  * Created by marzer on 25/04/2014.
@@ -150,7 +151,7 @@ public class NetworkThread extends BaseThread
 				boolean isNew = false;
 				for (WifiConfiguration item : items)
 				{
-					if (item.SSID.compareTo("\"" + WIFI_SSID + "\"") == 0)
+                    if (compareSSIDs(item.SSID,WIFI_SSID))
 					{
 						wifindus_public = item;
 						break;
@@ -188,13 +189,23 @@ public class NetworkThread extends BaseThread
 
 			//get our current network information
 			boolean onWiFindUsAP = false;
+            boolean initiallyOnWifi = false;
 			if (waitForWifiConnection())
 			{
 				wifiInfo = wifiManager.getConnectionInfo();
-				Logger.i(this, "Current Network: " + wifiInfo.getSSID());
-				Logger.i(this, "Current AP: " + wifiInfo.getBSSID());
-				onWiFindUsAP = wifiInfo.getSSID().compareTo("\"" + WIFI_SSID + "\"") == 0;
+				Logger.i(this, "Current Network: " + wifiInfo.getSSID().trim());
+				Logger.i(this, "Current AP: " + wifiInfo.getBSSID().trim());
+				onWiFindUsAP = compareSSIDs(wifiInfo.getSSID(),WIFI_SSID);
+                initiallyOnWifi = true;
+
+                if (onWiFindUsAP)
+                {
+                    MeshApplication.updateMeshConnected(logContext(), true);
+                    MeshApplication.updateMeshAddress(logContext(), wifiInfo.getIpAddress());
+                }
 			}
+            if (onWiFindUsAP)
+                Logger.i(this, "Currently on WFU mesh.");
 
 			//scan for wifindus ap's
             if (!MeshApplication.isMeshConnected())
@@ -217,7 +228,7 @@ public class NetworkThread extends BaseThread
                     continue;
                 for (ScanResult result : scanResults)
                 {
-                    if (result.SSID == null || result.SSID.compareTo(WIFI_SSID) != 0)
+                    if (result.SSID == null || !compareSSIDs(result.SSID,WIFI_SSID))
                         continue;
 					analyzer.addSample(result.BSSID,i,result.level);
                 }
@@ -259,7 +270,8 @@ public class NetworkThread extends BaseThread
 
 				Logger.i(this, "WiFindUs AP found ("+bestAP.getMean()+"dbm), connecting...");
 
-				wifiManager.disconnect();
+                if (initiallyOnWifi)
+				    wifiManager.disconnect();
 				safesleep(1000);
 				if (isCancelled())
 					return;
@@ -283,7 +295,7 @@ public class NetworkThread extends BaseThread
 			if (waitForWifiConnection())
 			{
 				wifiInfo = wifiManager.getConnectionInfo();
-				if (wifiInfo != null && wifiInfo.getSSID().compareTo("\"" + WIFI_SSID + "\"") != 0)
+				if (wifiInfo != null && compareSSIDs(wifiInfo.getSSID(),WIFI_SSID))
 				{
 					if (bestAP.getBSSID().compareTo(wifiInfo.getBSSID()) == 0)
 						Logger.i(this, (onWiFindUsAP ? "Migrated" : "Connected") + " OK.");
@@ -295,7 +307,7 @@ public class NetworkThread extends BaseThread
 				else
 				{
 					if (!MeshApplication.isMeshConnected())
-						Logger.e(this, "Connected to mesh failed!");
+						Logger.e(this, (onWiFindUsAP ? "Migrating" : "Connecting") + " to mesh failed!");
 					MeshApplication.updateMeshAddress(logContext(), -1);
 					MeshApplication.updateMeshConnected(logContext(), false);
 				}
@@ -336,25 +348,56 @@ public class NetworkThread extends BaseThread
 	{
 		NetworkInfo network = type < 0 ? connectivityManager.getActiveNetworkInfo() :
 			connectivityManager.getNetworkInfo(type);
-		if (network != null && network.isConnectedOrConnecting())
+		if (networkIsConnectedOrConnecting(network))
 		{
 			Logger.i(this, "Waiting for connection...");
-			while (network != null && !network.isConnected())
+			while (network != null && !networkIsConnected(network))
 			{
 				safesleep(1000);
-				if (isCancelled())
-					return false;
-				network = type < 0 ? connectivityManager.getActiveNetworkInfo() :
-					connectivityManager.getNetworkInfo(type);
-				if (network == null || !network.isConnectedOrConnecting())
+				if (isCancelled() ||
+				    !networkIsConnectedOrConnecting(network = type < 0
+                        ? connectivityManager.getActiveNetworkInfo() : connectivityManager.getNetworkInfo(type)))
 					break;
 			}
 		}
-		return network != null && network.isConnected();
+		return networkIsConnected(network);
 	}
+
+    private boolean networkIsConnectedOrConnecting(NetworkInfo ninfo)
+    {
+        if (ninfo == null)
+            return false;
+        if (ninfo.isConnectedOrConnecting())
+            return true;
+        NetworkInfo.State state = ninfo.getState();
+        return state == NetworkInfo.State.CONNECTED || state == NetworkInfo.State.CONNECTING;
+    }
+
+    private boolean networkIsConnected(NetworkInfo ninfo)
+    {
+        if (ninfo == null)
+            return false;
+        if (ninfo.isConnected())
+            return true;
+        NetworkInfo.State state = ninfo.getState();
+        return state == NetworkInfo.State.CONNECTED;
+    }
 
 	private boolean waitForWifiConnection()
 	{
 		return waitForConnection(ConnectivityManager.TYPE_WIFI);
 	}
+
+    private String formatSSID(String ssid)
+    {
+        if (ssid == null || (ssid = ssid.trim()).length() == 0)
+            return "\"\"";
+        return (ssid.substring(0, 1).compareTo("\"") == 0 ? "" : "\"")
+                + ssid + (ssid.substring(ssid.length()-1).compareTo("\"") == 0 ? "" : "\"");
+    }
+
+    private boolean compareSSIDs(String ssidA, String ssidB)
+    {
+        return formatSSID(ssidA).compareTo(formatSSID(ssidB)) == 0;
+    }
 }
