@@ -89,6 +89,8 @@ public class MainActivity extends FragmentActivity
         //create the background service
         if (MeshApplication.getMeshService() == null)
             startMeshService();
+
+        setTitle(getTitle() + " " + MeshApplication.getVersion());
     }
 
     @Override
