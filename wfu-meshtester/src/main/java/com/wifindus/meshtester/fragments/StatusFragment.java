@@ -29,7 +29,8 @@ import java.util.regex.Matcher;
 public class StatusFragment extends BaseFragment
 {
     private TextView connectionState, connectedSince, meshAddress,
-            node, nodeAddress, id, uptime, location, lastCleaned, battery, server;
+            node, nodeAddress, id, uptime, location, lastCleaned, battery, server,
+            locationTime;
 	private CheckBox forceMeshNetwork;
     private Handler timerHandler = new Handler();
     private static final String TAG = StatusFragment.class.getName();
@@ -54,6 +55,7 @@ public class StatusFragment extends BaseFragment
         location = (TextView)view.findViewById(R.id.field_location);
         lastCleaned = (TextView)view.findViewById(R.id.field_mesh_last_cleaned);
 		battery = (TextView)view.findViewById(R.id.field_battery);
+        locationTime = (TextView)view.findViewById(R.id.field_device_last_location);
 
 		server = (TextView)view.findViewById(R.id.field_mesh_server);
 		server.setText(getResources().getString(R.string.data_host_port,MeshApplication.getServerHostName(),MeshApplication.getServerPort()));
@@ -124,9 +126,9 @@ public class StatusFragment extends BaseFragment
 
     private void updateUptime()
     {
+        long time = System.currentTimeMillis();
         if (MeshApplication.isMeshConnected())
         {
-            long time = System.currentTimeMillis();
             connectedSince.setText(
                 Static.formatTimer(time - MeshApplication.getMeshConnectedSince()) + " ago");
             lastCleaned.setText(MeshApplication.lastCleaned() == 0 ? "" :
@@ -137,6 +139,9 @@ public class StatusFragment extends BaseFragment
             connectedSince.setText("");
             lastCleaned.setText("");
         }
+
+        locationTime.setText(MeshApplication.getLocationTime() == 0 ? "" :
+                Static.formatTimer(time - MeshApplication.getLocationTime()) + " ago");
 
         uptime.setText(Static.formatTimer(SystemClock.uptimeMillis()) + " ago");
 

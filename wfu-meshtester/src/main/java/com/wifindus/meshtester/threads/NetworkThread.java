@@ -239,6 +239,8 @@ public class NetworkThread extends BaseThread
                 if (isCancelled())
                     return;
             }
+            for (Map.Entry<String, SignalStrengthData> entry : analyzer.getStrengths().entrySet())
+                    MeshApplication.addSignalStrengthHistory(entry.getValue());
 
 			//analyze the data
 			SignalStrengthData bestAP = analyzer.analyze().getBest();

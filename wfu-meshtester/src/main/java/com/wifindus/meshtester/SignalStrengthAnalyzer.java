@@ -45,6 +45,11 @@ public class SignalStrengthAnalyzer
 		return this;
 	}
 
+    public Map<String, SignalStrengthData> getStrengths()
+    {
+        return strengths;
+    }
+
 	public SignalStrengthAnalyzer analyze()
 	{
 		if (analyzed)

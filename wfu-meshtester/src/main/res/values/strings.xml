@@ -14,6 +14,10 @@
     <string name="data_node">%1$d (%2$s)</string>
     <string name="data_battery">%1$d%% %2$s</string>
     <string name="data_host_port">%1$s:%2$d</string>
+    <string name="signal_strengths_saved_ok">File \'%1$s\' written to SD card.</string>
+    <string name="signal_strengths_saved_exception">%1$s thrown writing \'%2$s\' to SD card!</string>
+    <string name="signal_strengths_none">No signal strengths have been recorded. Check your wifi settings.</string>
+    <string name="export_signal_strengths">Export signal strengths</string>
 
     <!-- user page -->
     <string name="user_current">Current User</string>
@@ -47,6 +51,7 @@
     <string name="status_change_server_invalid_port">The provided port was invalid; must be between 1024 and 65535.</string>
     <string name="status_change_server_ok">The server address was changed successfully.</string>
     <string name="status_force_mesh">Force mesh wifi:</string>
+    <string name="status_last_location">Located:</string>
 
 
 

@@ -5,15 +5,24 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.Environment;
 import android.telephony.TelephonyManager;
+import android.widget.Toast;
 
 import com.wifindus.MathHelper;
 import com.wifindus.PingResult;
+import com.wifindus.logs.LogSender;
 import com.wifindus.logs.Logger;
 import com.wifindus.meshtester.threads.PingThread;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
@@ -37,7 +46,6 @@ public class MeshApplication extends Application
 
     private static volatile MeshService meshService = null;
     private static volatile SystemManager systemManager =  null;
-    private static volatile Location location = null;
 	private static volatile SharedPreferences preferences = null;
 
     //overall status
@@ -53,6 +61,8 @@ public class MeshApplication extends Application
         = new ConcurrentHashMap<Integer, String>();
 	private static volatile float batteryPercentage = 0.5f;
 	private static volatile boolean batteryCharging = false;
+    private static volatile Location location = null;
+    private static volatile long lastLocationTime = 0;
 
     //mesh status
     private static volatile boolean meshConnected = false;
@@ -68,6 +78,8 @@ public class MeshApplication extends Application
 	private static volatile int serverPort = -1;
 	private static volatile InetAddress serverAddress = null;
 	private static volatile boolean forceMeshConnection = true;
+    private static volatile ArrayList<SignalStrengthReportItem> signalStrengthHistory
+            = new ArrayList<SignalStrengthReportItem>();
 
     //pings
     private static volatile PingThread pingThread = null;
@@ -196,6 +208,11 @@ public class MeshApplication extends Application
 		return serverAddress;
 	}
 
+    public static final void addSignalStrengthHistory(SignalStrengthData data)
+    {
+        signalStrengthHistory.add(new SignalStrengthReportItem(data, location));
+    }
+
 	public static final boolean setServer(Context context, String hostname, int port)
 	{
 		boolean changeHost = hostname != null && hostname.length() != 0
@@ -231,9 +248,71 @@ public class MeshApplication extends Application
 		return true;
 	}
 
+    public static final void exportSignalStrengthLog(LogSender context)
+    {
+        String message = "";
+
+        if (signalStrengthHistory.size() == 0)
+        {
+            message = context.logContext().getResources().getString(R.string.signal_strengths_none);
+            Toast.makeText(context.logContext(),
+                    message,
+                    Toast.LENGTH_LONG).show();
+            Logger.w(context, message);
+            return;
+        }
+
+
+        ArrayList<SignalStrengthReportItem> reportData = signalStrengthHistory;
+        signalStrengthHistory = new  ArrayList<SignalStrengthReportItem>();
+
+        String filename = "signal_strengths_" + (new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date())) + ".csv";
+
+        try
+        {
+            File sdCard = Environment.getExternalStorageDirectory();
+            File dir = new File (sdCard.getAbsolutePath() + "/meshtester/signal_strengths");
+            dir.mkdirs();
+            File file = new File(dir, filename);
+
+
+            FileOutputStream fOut = new FileOutputStream(file);
+            OutputStreamWriter osw = new OutputStreamWriter(fOut);
+
+            //headings
+            osw.write(SignalStrengthReportItem.headers() + "\n");
+
+            // data
+            for (SignalStrengthReportItem item : reportData)
+                osw.write(item.toString() + "\n");
+            osw.flush();
+            osw.close();
+        }
+        catch (Exception e)
+        {
+            message = context.logContext().getResources().getString(R.string.signal_strengths_saved_exception, filename, e.getClass().getName());
+            Toast.makeText(context.logContext(),
+                    message,
+                    Toast.LENGTH_LONG).show();
+            Logger.e(context, message);
+            return;
+        }
+
+        message = context.logContext().getResources().getString(R.string.signal_strengths_saved_ok, filename);
+        Toast.makeText(context.logContext(),
+              message ,
+            Toast.LENGTH_LONG).show();
+        Logger.i(context, message);
+    }
+
     public static final Location getLocation()
     {
         return location;
+    }
+
+    public static final long getLocationTime()
+    {
+        return lastLocationTime;
     }
 
     public static final boolean isMeshConnected()
@@ -331,6 +410,7 @@ public class MeshApplication extends Application
             return;
 
         location = loc;
+        lastLocationTime = System.currentTimeMillis();
         dirty = true;
 
         Static.broadcastSimpleIntent(context, ACTION_UPDATE_LOCATION);

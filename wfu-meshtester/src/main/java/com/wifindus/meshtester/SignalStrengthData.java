@@ -115,6 +115,11 @@ public class SignalStrengthData
 		return best;
 	}
 
+    public int getCount()
+    {
+        return strengths.length;
+    }
+
 	public int getMissingCount()
 	{
 		if (!analyzed)

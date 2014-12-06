@@ -25,8 +25,9 @@ public class LocationThread extends BaseThread implements LocationListener
     private boolean hasGPS = false;
     private Handler handler = null;
     private boolean ok = false;
-    private Location location = null;
+    private volatile Location location = null;
 	private float batt = 1.0f;
+    private boolean hasRegistered = false;
 
     /////////////////////////////////////////////////////////////////////
     // CONSTRUCTORS
@@ -126,7 +127,9 @@ public class LocationThread extends BaseThread implements LocationListener
             @Override
             public void run()
             {
+                Logger.i(LocationThread.this, "Un-registering location updates");
                 systems().getLocationManager().removeUpdates(LocationThread.this);
+                hasRegistered = false;
             }
         });
     }
@@ -175,8 +178,13 @@ public class LocationThread extends BaseThread implements LocationListener
 			@Override
 			public void run()
 			{
-				Logger.i(LocationThread.this, "Registering location updates");
-				systems().getLocationManager().removeUpdates(LocationThread.this);
+				if (hasRegistered) {
+                    Logger.i(LocationThread.this, "Un-registering previous location updates");
+                    systems().getLocationManager().removeUpdates(LocationThread.this);
+                }
+
+                long tl = timeoutLength();
+                Logger.i(LocationThread.this, "Registering location updates ("+tl+"ms)");
 
 				Criteria criteria = new Criteria();
 				criteria.setAccuracy(Criteria.ACCURACY_FINE);
@@ -187,12 +195,13 @@ public class LocationThread extends BaseThread implements LocationListener
 				criteria.setPowerRequirement(Criteria.POWER_HIGH);
 
 				systems().getLocationManager().requestLocationUpdates(
-					timeoutLength(),
+                        tl,
 					5,
 					criteria,
 					LocationThread.this,
 					null
 				);
+                hasRegistered = true;
 			}
 		});
 	}
@@ -210,7 +219,7 @@ public class LocationThread extends BaseThread implements LocationListener
         if (isBetterLocation(newLoc, location))
         {
             location = newLoc;
-            MeshApplication.updateLocation(logContext(), location);
+            MeshApplication.updateLocation(logContext(), new Location(location));
         }
     }
 }
