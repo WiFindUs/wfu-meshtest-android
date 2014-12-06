@@ -9,7 +9,6 @@ public class SignalStrengthData
 	private int meanStrength = 0, best = Integer.MIN_VALUE, worst = Integer.MAX_VALUE;
 	private boolean analyzed = false;
 	private int iterationCount;
-	private int highestIteration = -1;
 	private int missingCount = -1;
 	private int tier = -1;
 	private String bssid;
@@ -35,10 +34,6 @@ public class SignalStrengthData
 		if (analyzed)
 			throw new IllegalStateException("This instance of SignalStrengthData has already been finalized by analyze().");
 
-		//track highest seen iteration
-		if (iteration > highestIteration)
-			highestIteration = iteration;
-
 		//determine if this sample is useful (to account for spikes etc).
 		//invalid ones are ignored (considered missing).
 		if (strength <= -30 && strength >= -125)
@@ -49,8 +44,6 @@ public class SignalStrengthData
 
 	public SignalStrengthData analyze(int substituteForMissing)
 	{
-		if (highestIteration < (iterationCount-1))
-			throw new IllegalStateException("You must provide data for each iteration level of the sample set.");
 		if (analyzed)
 			return this;
 
