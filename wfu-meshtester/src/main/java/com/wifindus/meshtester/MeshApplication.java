@@ -3,6 +3,7 @@ package com.wifindus.meshtester;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.telephony.TelephonyManager;
 
@@ -42,6 +43,7 @@ public class MeshApplication extends Application
     //overall status
     private static volatile boolean dirty = true;
     private static volatile long lastCleanTime = 0;
+    private static volatile String versionString = "NUL";
 
     //device info
     private static volatile long id = -1;
@@ -90,6 +92,14 @@ public class MeshApplication extends Application
             systemManager = new SystemManager(this);
         if (preferences == null)
             preferences = getSharedPreferences("com.wifindus.eye.sharedprefs", Context.MODE_PRIVATE);
+
+        //version info
+        try {
+            versionString = MeshApplication.systems().getPackageManager()
+                    .getPackageInfo(this.getPackageName(), 0).versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            versionString = "NULL";
+        }
 
         //id
 		SharedPreferences.Editor editor = preferences.edit();
@@ -170,6 +180,11 @@ public class MeshApplication extends Application
 	{
 		return serverPort;
 	}
+
+    public static final String getVersion()
+    {
+        return versionString;
+    }
 
 	public static final String getServerHostName()
 	{

@@ -23,7 +23,6 @@ public class UpdateThread extends BaseThread
 {
     private static final String TAG = UpdateThread.class.getName();
     private volatile DatagramSocket updateSocket;
-    private static String versionString;
 
     /////////////////////////////////////////////////////////////////////
     // CONSTRUCTORS
@@ -32,13 +31,6 @@ public class UpdateThread extends BaseThread
     public UpdateThread(Context launchingContext)
     {
         super(launchingContext);
-        try {
-            versionString = MeshApplication.systems().getPackageManager()
-                    .getPackageInfo(launchingContext.getPackageName(), 0).versionName;
-        } catch (PackageManager.NameNotFoundException e) {
-            versionString = "NULL";
-        }
-
     }
 
     /////////////////////////////////////////////////////////////////////
@@ -98,7 +90,7 @@ public class UpdateThread extends BaseThread
 		String message = "EYE|DEV|" + Long.toHexString(MeshApplication.getID()).toUpperCase()
 			+ "|" + Long.toHexString(time).toUpperCase()
 			+ "|dt:" + MeshApplication.getDeviceType()
-			+ "|ver:" + versionString
+			+ "|ver:" + MeshApplication.getVersion()
 			+ "|sdk:" + android.os.Build.VERSION.SDK_INT
 			+ "|user:" + (MeshApplication.getUserID() >= 0 ?
 				Long.toHexString(MeshApplication.getUserID()).toUpperCase()
@@ -121,13 +113,9 @@ public class UpdateThread extends BaseThread
             updateSocket.send(new DatagramPacket(buf, buf.length, MeshApplication.getServerAddress(), MeshApplication.getServerPort()));
             MeshApplication.clean(logContext());
         }
-        catch (SocketException e)
+        catch (Exception e)
         {
-            Logger.e(this, "Update failed; SocketException thrown", e.toString());
-        }
-        catch (IOException e)
-        {
-            Logger.e(this, "Update failed; %s", e.toString());
+            Logger.e(this, "Updater: %s thrown; %s", e.getClass().getName(), e.getMessage());
         }
     }
 
