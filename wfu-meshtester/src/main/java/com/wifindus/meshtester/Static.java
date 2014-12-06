@@ -30,6 +30,8 @@ public abstract class Static
 	public static final Random random = new Random();
     public static final DecimalFormat locationFormat = new DecimalFormat("#.########");
 	public static final DecimalFormat percentageFormat = new DecimalFormat("#.##");
+    public static final Pattern PATTERN_MAC_ADDRESS
+            = Pattern.compile("\\s*([0-9A-F]{2}[:-]){5}([0-9A-F]{2})\\s*", Pattern.CASE_INSENSITIVE);
 	public static final Pattern PATTERN_HOSTNAME_PORT = Pattern.compile("\\s*"
 		//hostname/ip
 		+"("
