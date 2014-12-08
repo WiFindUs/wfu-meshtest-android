@@ -178,7 +178,7 @@ public class StatusFragment extends BaseFragment
 			//create text edit box
 			final EditText text = new EditText(StatusFragment.this.getActivity());
 			text.setRawInputType(InputType.TYPE_CLASS_TEXT);
-			text.setFilters(new InputFilter[] {new InputFilter.LengthFilter(22)});
+			text.setFilters(new InputFilter[] {new InputFilter.LengthFilter(64)});
 			text.setText(getResources().getString(R.string.data_host_port,MeshApplication.getServerHostName(),MeshApplication.getServerPort()));
 
 			//build the dialog
