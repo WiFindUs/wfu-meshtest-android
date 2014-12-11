@@ -96,6 +96,9 @@ public class NetworkThread extends BaseThread
         }
         wifiManager = systems().getWifiManager();
 
+		if (Static.isAirplaneModeOn(this.logContext()))
+			Logger.w(this, "Airplane mode is on; network functions may not work!");
+
 		Logger.i(this, "WiFi thread OK.");
     }
 
