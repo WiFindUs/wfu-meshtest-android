@@ -1,5 +1,7 @@
 package com.wifindus;
 
+import android.location.Location;
+
 public abstract class MathHelper
 {
     public static double EPSILON_DOUBLE = 0.000000000001;
@@ -37,4 +39,14 @@ public abstract class MathHelper
         double prc = (1.0 - Math.cos(f * Math.PI)) * 0.5;
         return a *(1.0 - prc) + b * prc;
     }
+
+	public static boolean isEmptyLocation(Location loc)
+	{
+		if (loc == null)
+			return true;
+		return equal(loc.getLatitude(),0.0)
+			&& equal(loc.getLongitude(),0.0)
+			&& (!loc.hasAccuracy() || equal(loc.getAccuracy(),0.0f))
+			&& (!loc.hasAltitude() || equal(loc.getAltitude(),0.0f));
+	}
 }

@@ -5,6 +5,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 
 import com.wifindus.BaseThread;
+import com.wifindus.MathHelper;
 import com.wifindus.meshtester.MeshApplication;
 import com.wifindus.meshtester.Static;
 import com.wifindus.logs.Logger;
@@ -98,7 +99,7 @@ public class UpdateThread extends BaseThread
 			+ "|batt:" + Static.percentageFormat.format(MeshApplication.getBatteryPercentage())
 			+ "|chg:" + (MeshApplication.isBatteryCharging() ? "1" : "0");
 		Location loc = MeshApplication.getLocation();
-		if (loc != null)
+		if (loc != null && !MathHelper.isEmptyLocation(loc))
 		{
 			message += "|lat:" + Static.locationFormat.format(loc.getLatitude());
 			message += "|long:" + Static.locationFormat.format(loc.getLongitude());
