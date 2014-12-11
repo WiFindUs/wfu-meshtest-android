@@ -13,6 +13,7 @@ import android.os.Looper;
 import com.wifindus.BaseThread;
 import com.wifindus.meshtester.MeshApplication;
 import com.wifindus.logs.Logger;
+import com.wifindus.meshtester.Static;
 
 /**
  * Created by marzer on 25/04/2014.
@@ -98,9 +99,14 @@ public class LocationThread extends BaseThread implements LocationListener
             cancelThread();
             return;
         }
+		batt = MeshApplication.getBatteryPercentage();
 		registerLocationUpdateListener();
         assessLocation(systems().getLocationManager().getLastKnownLocation(LocationManager.GPS_PROVIDER));
         ok = true;
+
+		if (!systems().getLocationManager().isProviderEnabled(LocationManager.GPS_PROVIDER))
+			Logger.w(this, "GPS is disabled!");
+
         Logger.i(this, "Location thread OK.");
     }
 
@@ -179,12 +185,11 @@ public class LocationThread extends BaseThread implements LocationListener
 			public void run()
 			{
 				if (hasRegistered) {
-                    Logger.i(LocationThread.this, "Un-registering previous location updates");
                     systems().getLocationManager().removeUpdates(LocationThread.this);
+					Logger.i(LocationThread.this, "Un-registered previous location updates");
                 }
 
                 long tl = timeoutLength();
-                Logger.i(LocationThread.this, "Registering location updates ("+tl+"ms)");
 
 				Criteria criteria = new Criteria();
 				criteria.setAccuracy(Criteria.ACCURACY_FINE);
@@ -202,6 +207,7 @@ public class LocationThread extends BaseThread implements LocationListener
 					null
 				);
                 hasRegistered = true;
+				Logger.i(LocationThread.this, "Registered location updates ("+tl+"ms)");
 			}
 		});
 	}
