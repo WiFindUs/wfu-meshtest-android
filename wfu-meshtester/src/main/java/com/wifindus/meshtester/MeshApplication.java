@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Environment;
+import android.os.StrictMode;
 import android.telephony.TelephonyManager;
 import android.widget.Toast;
 
@@ -96,6 +97,7 @@ public class MeshApplication extends Application
         super.onCreate();
 
         //strict Mode
+		StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().permitNetwork().build());
         //StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectAll().penaltyLog().penaltyDeath().build());
         //StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().detectAll().penaltyLog().penaltyDeath().build());
 
@@ -393,20 +395,8 @@ public class MeshApplication extends Application
 
     public static final void updateLocation(Context context, Location loc)
     {
-        if (loc == null && location == null)
-            return;
-
-        boolean changed = false;
-        if (loc != null && location != null)
-        {
-            if (!MathHelper.equal(location.getLatitude(),loc.getLatitude())
-				|| !MathHelper.equal(location.getLongitude(),loc.getLongitude()))
-                changed = true;
-        }
-        else
-            changed = true;
-
-        if (!changed)
+        if (loc == location //same, or both null
+			|| (loc != null && location != null && location.distanceTo(loc) <= 0.1)) //too close
             return;
 
         location = loc;
