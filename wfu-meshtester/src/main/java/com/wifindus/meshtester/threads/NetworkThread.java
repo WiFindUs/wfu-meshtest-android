@@ -343,8 +343,8 @@ public class NetworkThread extends BaseThread
     @Override
     protected void cleanup()
     {
-        if (wifindus_public != null && wifindus_public.networkId > -1)
-            wifiManager.removeNetwork(wifindus_public.networkId);
+        //if (wifindus_public != null && wifindus_public.networkId > -1)
+        //    wifiManager.removeNetwork(wifindus_public.networkId);
         if (wifiLock != null && wifiLock.isHeld())
             wifiLock.release();
     }
