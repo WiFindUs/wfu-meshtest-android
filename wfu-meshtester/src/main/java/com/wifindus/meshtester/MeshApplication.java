@@ -471,7 +471,7 @@ public class MeshApplication extends Application
 	public static void updateBatteryStats(Context context, float percentage, boolean charging)
 	{
 		if ((int)(percentage * 100.0f) == (int)(batteryPercentage * 100.0f)
-			|| batteryCharging == charging)
+			&& batteryCharging == charging)
 			return;
 
 		batteryPercentage = percentage;
