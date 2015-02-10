@@ -50,9 +50,11 @@ public class UpdateThread extends BaseThread
 	@Override
 	public long timeoutLength()
 	{
-		float battery = MeshApplication.getBatteryPercentage();
-		return (battery >= 0.75f || MeshApplication.isBatteryCharging()) ? 1000 :
-			(battery >= 0.25 ? 2500 : 5000);
+		//float battery = MeshApplication.getBatteryPercentage();
+		//return (battery >= 0.75f || MeshApplication.isBatteryCharging()) ? 1000 :
+		//	(battery >= 0.25 ? 2500 : 5000);
+		return !MeshApplication.isMeshConnected()
+			|| MeshApplication.getServerAddress() == null ? 2500 : 500;
 	}
 
     @Override
@@ -80,8 +82,8 @@ public class UpdateThread extends BaseThread
         if (!MeshApplication.isMeshConnected() || MeshApplication.getServerAddress() == null)
             return;
 
-        long time = System.currentTimeMillis();
-        if ((time - MeshApplication.lastCleaned()) >= 10000)
+		long time = System.currentTimeMillis();
+        if ((time - MeshApplication.lastCleaned()) >= 5000)
             MeshApplication.forceDirty();
 
         if (!MeshApplication.isDirty())
@@ -114,6 +116,10 @@ public class UpdateThread extends BaseThread
             updateSocket.send(new DatagramPacket(buf, buf.length, MeshApplication.getServerAddress(), MeshApplication.getServerPort()));
             MeshApplication.clean(logContext());
         }
+		catch (SocketException se)
+		{
+			Logger.e(this, "Updater: Server unreachable");
+		}
         catch (Exception e)
         {
             Logger.e(this, "Updater: %s thrown; %s", e.getClass().getName(), e.getMessage());
