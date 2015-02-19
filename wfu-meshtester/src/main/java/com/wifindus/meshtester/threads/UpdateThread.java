@@ -90,9 +90,9 @@ public class UpdateThread extends BaseThread
             return;
 
 		//generate message content
-		String message = "EYE|DEV|" + Long.toHexString(MeshApplication.getID()).toUpperCase()
+		String message = "EYE{DEV|" + Long.toHexString(MeshApplication.getID()).toUpperCase()
 			+ "|" + Long.toHexString(time).toUpperCase()
-			+ "|dt:" + MeshApplication.getDeviceType()
+			+ "{dt:" + MeshApplication.getDeviceType()
 			+ "|ver:" + MeshApplication.getVersion()
 			+ "|sdk:" + android.os.Build.VERSION.SDK_INT
 			+ "|user:" + (MeshApplication.getUserID() >= 0 ?
@@ -110,6 +110,7 @@ public class UpdateThread extends BaseThread
 			if (loc.hasAltitude())
 				message += "|alt:" + loc.getAccuracy();
 		}
+		message += "}}";
 		try
 		{
             byte[] buf = message.getBytes();
