@@ -16,11 +16,6 @@ public abstract class BaseFragment extends Fragment implements LogSender
         return MeshApplication.getMeshService();
     }
 
-    public boolean serviceReady()
-    {
-        return service() != null && service().isReady();
-    }
-
     public Context logContext() { return this.getActivity(); }
 
     public abstract void update();

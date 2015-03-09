@@ -5,7 +5,7 @@ import android.content.Context;
 import com.wifindus.BaseThread;
 import com.wifindus.PingResult;
 import com.wifindus.meshtester.MeshApplication;
-import com.wifindus.meshtester.Static;
+import com.wifindus.Static;
 import com.wifindus.logs.Logger;
 
 import java.io.IOException;

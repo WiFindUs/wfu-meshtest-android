@@ -14,12 +14,10 @@ import com.wifindus.meshtester.MeshApplication;
 import com.wifindus.logs.Logger;
 import com.wifindus.meshtester.SignalStrengthAnalyzer;
 import com.wifindus.meshtester.SignalStrengthData;
-import com.wifindus.meshtester.Static;
+import com.wifindus.Static;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 
 /**
  * Created by marzer on 25/04/2014.

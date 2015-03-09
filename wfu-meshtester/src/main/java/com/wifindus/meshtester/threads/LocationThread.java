@@ -13,7 +13,6 @@ import android.os.Looper;
 import com.wifindus.BaseThread;
 import com.wifindus.meshtester.MeshApplication;
 import com.wifindus.logs.Logger;
-import com.wifindus.meshtester.Static;
 
 /**
  * Created by marzer on 25/04/2014.
@@ -29,6 +28,7 @@ public class LocationThread extends BaseThread implements LocationListener
     private volatile Location location = null;
 	private float batt = 1.0f;
     private boolean hasRegistered = false;
+	private long timeout = -1;
 
     /////////////////////////////////////////////////////////////////////
     // CONSTRUCTORS
@@ -99,7 +99,7 @@ public class LocationThread extends BaseThread implements LocationListener
             cancelThread();
             return;
         }
-		batt = MeshApplication.getBatteryPercentage();
+		timeout = timeoutLength();
 		registerLocationUpdateListener();
         assessLocation(systems().getLocationManager().getLastKnownLocation(LocationManager.GPS_PROVIDER));
         ok = true;
@@ -116,10 +116,12 @@ public class LocationThread extends BaseThread implements LocationListener
 		assessLocation(systems().getLocationManager().getLastKnownLocation(LocationManager.GPS_PROVIDER));
 
 		//check battery level shifts
-		float newBatt = MeshApplication.getBatteryPercentage();
-		if ((batt >= 0.75f && newBatt < 0.75f) || (batt >= 0.25f && newBatt < 0.25f))
+		long newTimeout = timeoutLength();
+		if (newTimeout != timeout)
+		{
+			timeout = newTimeout;
 			registerLocationUpdateListener();
-		batt = newBatt;
+		}
     }
 
     @Override
@@ -189,8 +191,6 @@ public class LocationThread extends BaseThread implements LocationListener
 					Logger.i(LocationThread.this, "Un-registered previous location updates");
                 }
 
-                long tl = timeoutLength();
-
 				Criteria criteria = new Criteria();
 				criteria.setAccuracy(Criteria.ACCURACY_FINE);
 				criteria.setAltitudeRequired(false);
@@ -200,14 +200,14 @@ public class LocationThread extends BaseThread implements LocationListener
 				criteria.setPowerRequirement(Criteria.POWER_HIGH);
 
 				systems().getLocationManager().requestLocationUpdates(
-                        tl,
+					timeout,
 					5,
 					criteria,
 					LocationThread.this,
 					null
 				);
                 hasRegistered = true;
-				Logger.i(LocationThread.this, "Registered location updates ("+tl+"ms)");
+				Logger.i(LocationThread.this, "Registered location updates ("+timeout+"ms)");
 			}
 		});
 	}

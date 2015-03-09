@@ -1,21 +1,16 @@
 package com.wifindus.meshtester.threads;
 
 import android.content.Context;
-import android.content.pm.PackageManager;
-import android.location.Location;
+import android.util.Log;
 
 import com.wifindus.BaseThread;
-import com.wifindus.MathHelper;
 import com.wifindus.meshtester.MeshApplication;
-import com.wifindus.meshtester.Static;
+import com.wifindus.Static;
 import com.wifindus.logs.Logger;
 
-import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 
 /**
  * Created by marzer on 25/04/2014.
@@ -50,11 +45,9 @@ public class UpdateThread extends BaseThread
 	@Override
 	public long timeoutLength()
 	{
-		//float battery = MeshApplication.getBatteryPercentage();
-		//return (battery >= 0.75f || MeshApplication.isBatteryCharging()) ? 1000 :
-		//	(battery >= 0.25 ? 2500 : 5000);
-		return !MeshApplication.isMeshConnected()
-			|| MeshApplication.getServerAddress() == null ? 2500 : 500;
+		//return !MeshApplication.isMeshConnected()
+		//	|| MeshApplication.getServerAddress() == null ? 5000 : 1000;
+		return 1000;
 	}
 
     @Override
@@ -82,40 +75,21 @@ public class UpdateThread extends BaseThread
         if (!MeshApplication.isMeshConnected() || MeshApplication.getServerAddress() == null)
             return;
 
-		long time = System.currentTimeMillis();
-        if ((time - MeshApplication.lastCleaned()) >= 5000)
-            MeshApplication.forceDirty();
-
-        if (!MeshApplication.isDirty())
+		String payload = MeshApplication.updatePacketPayload();
+        if (payload.length() == 0)
             return;
+		payload = Static.PATTERN_TRAILING_ZEROES.matcher(payload).replaceAll(".0");
+		payload = Static.PATTERN_FLOAT_ZERO.matcher(payload).replaceAll("0");
 
 		//generate message content
-		String message = "EYE{DEV|" + Long.toHexString(MeshApplication.getID()).toUpperCase()
-			+ "|" + Long.toHexString(time).toUpperCase()
-			+ "{dt:" + MeshApplication.getDeviceType()
-			+ "|ver:" + MeshApplication.getVersion()
-			+ "|sdk:" + android.os.Build.VERSION.SDK_INT
-			+ "|user:" + (MeshApplication.getUserID() >= 0 ?
-				Long.toHexString(MeshApplication.getUserID()).toUpperCase()
-				: "-1")
-			+ "|batt:" + Static.percentageFormat.format(MeshApplication.getBatteryPercentage())
-			+ "|chg:" + (MeshApplication.isBatteryCharging() ? "1" : "0");
-		Location loc = MeshApplication.getLocation();
-		if (loc != null && !MathHelper.isEmptyLocation(loc))
-		{
-			message += "|lat:" + Static.locationFormat.format(loc.getLatitude());
-			message += "|long:" + Static.locationFormat.format(loc.getLongitude());
-			if (loc.hasAccuracy())
-				message += "|acc:" + loc.getAccuracy();
-			if (loc.hasAltitude())
-				message += "|alt:" + loc.getAccuracy();
-		}
-		message += "}}";
+		String message = "EYE{DEV|" + MeshApplication.getID().toString(16).toUpperCase()
+			+ "|" + Long.toHexString(System.currentTimeMillis()).toUpperCase()
+			+ "{" + payload + "}}";
+
 		try
 		{
             byte[] buf = message.getBytes();
             updateSocket.send(new DatagramPacket(buf, buf.length, MeshApplication.getServerAddress(), MeshApplication.getServerPort()));
-            MeshApplication.clean(logContext());
         }
 		catch (SocketException se)
 		{

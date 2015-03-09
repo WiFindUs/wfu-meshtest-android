@@ -2,26 +2,22 @@ package com.wifindus.meshtester.fragments;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.text.InputFilter;
 import android.text.InputType;
-import android.text.format.Formatter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.wifindus.logs.Logger;
 import com.wifindus.meshtester.MeshApplication;
 import com.wifindus.meshtester.R;
-import com.wifindus.meshtester.Static;
+import com.wifindus.Static;
 
 import java.util.regex.Matcher;
 
@@ -87,7 +83,7 @@ public class StatusFragment extends BaseFragment
     @Override
     public void update()
     {
-		id.setText(Long.toHexString(MeshApplication.getID()).toUpperCase());
+		id.setText(MeshApplication.getID().toString(16).toUpperCase());
         if (MeshApplication.isMeshConnected())
         {
             connectionState.setText("Yes");
@@ -107,10 +103,10 @@ public class StatusFragment extends BaseFragment
             nodeAddress.setText("");
         }
 
-
-        Location loc = MeshApplication.getLocation();
-        location.setText(loc != null ? getResources().getString(R.string.data_latlong,
-                loc.getLatitude(),loc.getLongitude()) : "");
+		Double latitude = MeshApplication.getLatitude();
+		Double longitude = MeshApplication.getLongitude();
+        location.setText(latitude != null && longitude != null
+			? getResources().getString(R.string.data_latlong, latitude,longitude) : "");
 
 		battery.setText(getResources().getString(R.string.data_battery,
 			(int)(MeshApplication.getBatteryPercentage()*100.0f),
@@ -131,8 +127,6 @@ public class StatusFragment extends BaseFragment
         {
             connectedSince.setText(
                 Static.formatTimer(time - MeshApplication.getMeshConnectedSince()) + " ago");
-            lastCleaned.setText(MeshApplication.lastCleaned() == 0 ? "" :
-                Static.formatTimer(time - MeshApplication.lastCleaned()) + " ago");
         }
         else
         {

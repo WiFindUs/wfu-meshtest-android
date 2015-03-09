@@ -8,15 +8,21 @@ import android.location.Location;
 public class SignalStrengthReportItem
 {
     private SignalStrengthData data;
-    private Location location;
+    private Double latitude, longitude;
     private long timestamp;
 
-    public SignalStrengthReportItem(SignalStrengthData data, Location location)
+    public SignalStrengthReportItem(SignalStrengthData data, Double latitude, Double longitude)
     {
         timestamp = System.currentTimeMillis();
         this.data = data;
-        this.location = location;
+        this.latitude = latitude;
+		this.longitude = longitude;
     }
+
+	public SignalStrengthReportItem(SignalStrengthData data)
+	{
+		this(data,null,null);
+	}
 
     public static String headers()
     {
@@ -41,8 +47,8 @@ public class SignalStrengthReportItem
                 + ",\t" + data.getTier()
                 + ",\t" + data.getCount()
                 + ",\t" + data.getMissingCount()
-                + ",\t" + (location == null ? " " : location.getLatitude())
-                + ",\t" + (location == null ? " " : location.getLongitude())
+                + ",\t" + (latitude == null ? " " : latitude)
+                + ",\t" + (longitude == null ? " " : longitude)
                 + ",\t" + MeshApplication.getID();
 
     }

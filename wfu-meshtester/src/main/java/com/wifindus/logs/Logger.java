@@ -3,7 +3,7 @@ package com.wifindus.logs;
 import android.util.Log;
 
 import com.wifindus.meshtester.MeshApplication;
-import com.wifindus.meshtester.Static;
+import com.wifindus.Static;
 
 import java.util.ArrayList;
 import java.util.List;

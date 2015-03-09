@@ -26,7 +26,6 @@ public class PingFragment extends BaseFragment
 
     private EditText rangeText = null;
     private TextView pingText = null;
-    private ScrollView pingScroll = null;
     private Button startStopButton;
 
     public PingFragment()
@@ -39,7 +38,6 @@ public class PingFragment extends BaseFragment
     {
         View view = inflater.inflate(R.layout.fragment_pinger, container, false);
         pingText = (TextView)view.findViewById(R.id.text);
-        pingScroll = (ScrollView)view.findViewById(R.id.scroll);
         startStopButton = (Button)view.findViewById(R.id.start_stop_button);
         startStopButton.setOnClickListener(startStopClickListener);
         rangeText = (EditText)view.findViewById(R.id.field_node_range);

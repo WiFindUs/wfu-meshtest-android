@@ -28,7 +28,7 @@
     <string name="user_really_logout">Really sign out?</string>
     <string name="user_id_help_text">Enter your User ID:</string>
     <string name="user_no_id">Not signed in.</string>
-    <string name="user_login_ok_toast">Successfully signed in as user #%d.</string>
+    <string name="user_login_ok_toast">Successfully signed in as user #%s.</string>
     <string name="user_logout_ok_toast">Successfully signed out.</string>
 
     <!-- status page -->

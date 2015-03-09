@@ -16,7 +16,7 @@ import android.widget.Toast;
 
 import com.wifindus.meshtester.MeshApplication;
 import com.wifindus.meshtester.R;
-import com.wifindus.meshtester.Static;
+import com.wifindus.Static;
 
 public class UserFragment extends BaseFragment  {
     private TextView id, name, since;
@@ -59,10 +59,10 @@ public class UserFragment extends BaseFragment  {
     @Override
     public void update()
     {
-        int userID = MeshApplication.getUserID();
-        id.setText(userID >= 0 ? Integer.toString(MeshApplication.getUserID()) : getResources().getString(R.string.user_no_id));
-        name.setText(userID >= 0 ? MeshApplication.getUserName() : "");
-        signInOutButton.setText(userID >= 0 ? R.string.user_logout : R.string.user_login);
+        long userID = MeshApplication.getUserID();
+        id.setText(userID > 0 ? Long.toHexString(userID).toUpperCase() : getResources().getString(R.string.user_no_id));
+        name.setText(userID > 0 ? MeshApplication.getUserName() : "");
+        signInOutButton.setText(userID > 0 ? R.string.user_logout : R.string.user_login);
         updateSignedInTime();
     }
 
@@ -73,7 +73,7 @@ public class UserFragment extends BaseFragment  {
             if (view != signInOutButton)
                 return;
 
-            if (MeshApplication.getUserID() >= 0)
+            if (MeshApplication.getUserID() > 0)
             {
                 AlertDialog.Builder builder = new AlertDialog.Builder(UserFragment.this.getActivity());
                 builder.setMessage(R.string.user_really_logout)
@@ -93,8 +93,10 @@ public class UserFragment extends BaseFragment  {
             {
                 //create text edit box
                 final EditText text = new EditText(UserFragment.this.getActivity());
-                text.setRawInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_NORMAL);
-                text.setFilters(new InputFilter[] {new InputFilter.LengthFilter(8)});
+                text.setRawInputType(InputType.TYPE_CLASS_TEXT
+					| InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS
+					| InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+                text.setFilters(new InputFilter[] {new InputFilter.LengthFilter(12)});
 
                 //build the dialog
                 AlertDialog.Builder builder = new AlertDialog.Builder(UserFragment.this.getActivity());
@@ -104,16 +106,16 @@ public class UserFragment extends BaseFragment  {
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface di, int i) {
 
-                            int userID = -1;
+                            long userID = 0;
                             try {
-                                userID = Integer.parseInt(text.getText().toString().trim());
+                                userID = Long.parseLong(text.getText().toString().trim(), 16);
                             } catch (NumberFormatException ex) {
                             }
                             MeshApplication.updateUser(UserFragment.this.getActivity(), userID);
                             update();
-                            if (userID > -1)
+                            if (userID > 0)
                                 Toast.makeText(UserFragment.this.getActivity(),
-                                        getResources().getString(R.string.user_login_ok_toast, userID),
+                                        getResources().getString(R.string.user_login_ok_toast, Long.toHexString(userID).toUpperCase()),
                                         Toast.LENGTH_LONG).show();
                         }
                     })
@@ -129,7 +131,7 @@ public class UserFragment extends BaseFragment  {
 
     private void updateSignedInTime()
     {
-        if (MeshApplication.getUserID() >= 0)
+        if (MeshApplication.getUserID() > 0)
         {
             long time = System.currentTimeMillis();
             since.setText(

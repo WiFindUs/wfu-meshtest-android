@@ -48,6 +48,6 @@ public class PingResult
         error = false;
         transmitted = received = errors = 0;
         loss = averageTime = 0.0;
-        waiting = false;
+        waiting = true;
     }
 }

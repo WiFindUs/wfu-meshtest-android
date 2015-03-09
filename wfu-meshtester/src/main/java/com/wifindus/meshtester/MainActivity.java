@@ -80,7 +80,6 @@ public class MainActivity extends FragmentActivity
         intentFilter.addAction(MeshApplication.ACTION_UPDATE_CONNECTION_STATE);
         intentFilter.addAction(MeshApplication.ACTION_UPDATE_LOCATION);
         intentFilter.addAction(MeshApplication.ACTION_UPDATE_MESH_ADDRESS);
-        intentFilter.addAction(MeshApplication.ACTION_UPDATE_CLEANED);
         intentFilter.addAction(MeshApplication.ACTION_UPDATE_USER);
         intentFilter.addAction(MeshApplication.ACTION_UPDATE_PINGS);
 		intentFilter.addAction(MeshApplication.ACTION_UPDATE_BATTERY);
@@ -197,21 +196,20 @@ public class MainActivity extends FragmentActivity
         {
             if (arg1.getAction().equals(Logger.ACTION_UPDATE_LOG))
             {
-                if (logFragment != null)
+                if (logFragment != null && logFragment.isVisible())
                     logFragment.update();
             }
             else if (arg1.getAction().equals(MeshApplication.ACTION_UPDATE_CONNECTION_STATE)
              || arg1.getAction().equals(MeshApplication.ACTION_UPDATE_LOCATION)
              || arg1.getAction().equals(MeshApplication.ACTION_UPDATE_MESH_ADDRESS)
-             || arg1.getAction().equals(MeshApplication.ACTION_UPDATE_CLEANED)
 			 || arg1.getAction().equals(MeshApplication.ACTION_UPDATE_BATTERY))
             {
-                if (statusFragment != null)
+                if (statusFragment != null && statusFragment.isVisible())
                     statusFragment.update();
             }
             else if (arg1.getAction().equals(MeshApplication.ACTION_UPDATE_PINGS))
             {
-                if (pingFragment != null)
+                if (pingFragment != null && pingFragment.isVisible())
                     pingFragment.update();
             }
         }
