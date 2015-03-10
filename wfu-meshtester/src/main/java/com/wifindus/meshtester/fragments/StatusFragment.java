@@ -83,7 +83,7 @@ public class StatusFragment extends BaseFragment
     @Override
     public void update()
     {
-		id.setText(MeshApplication.getID().toString(16).toUpperCase());
+		id.setText(Integer.toHexString(MeshApplication.getID()).toUpperCase());
         if (MeshApplication.isMeshConnected())
         {
             connectionState.setText("Yes");

@@ -9,6 +9,7 @@ import android.os.Environment;
 import android.os.StrictMode;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.wifindus.PingResult;
@@ -30,12 +31,14 @@ import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Random;
+import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by marzer on 25/04/2014.
  */
-public class MeshApplication extends Application
+public class MeshApplication extends Application implements LogSender
 {
 	public static final long SIGNOUT_INVALID_TIME = 1000 * 60 * 60 * 8; //eight hours
 
@@ -48,6 +51,7 @@ public class MeshApplication extends Application
 	public static final String ACTION_UPDATE_BATTERY = MeshApplication.ACTION_PREFIX + "UPDATE_BATTERY";
 	public static final String ACTION_UPDATE_SERVER = MeshApplication.ACTION_PREFIX + "UPDATE_SERVER";
 
+	private static final String TAG = MeshApplication.class.getName();
 	private static volatile MeshService meshService = null;
 	private static volatile SystemManager systemManager = null;
 	private static volatile SharedPreferences preferences = null;
@@ -57,11 +61,12 @@ public class MeshApplication extends Application
 		= new VolatilePropertyList();
 
 	//device info
-	private static volatile BigInteger id = null;
+	private static volatile int id = -1;
 	private static volatile long lastSignInTime = 0;
 	private static volatile ConcurrentHashMap<Long, String> userNames
 		= new ConcurrentHashMap<Long, String>();
 	private static volatile long lastLocationTime = 0;
+	private static volatile File persistentDirectory = null;
 
 	//mesh status
 	private static volatile boolean meshConnected = false;
@@ -102,10 +107,78 @@ public class MeshApplication extends Application
 			systemManager = new SystemManager(this);
 		if (preferences == null)
 			preferences = getSharedPreferences("com.wifindus.eye.sharedprefs", Context.MODE_PRIVATE);
+		SharedPreferences.Editor editor = preferences.edit();
+
+		//persistent files
+		File sdCard = Environment.getExternalStorageDirectory();
+		persistentDirectory = new File(sdCard.getAbsolutePath() + "/meshtester");
+		if (Static.isExternalStorageWritable())
+			persistentDirectory.mkdirs();
 
 		//device id
-		id = new BigInteger(
-			Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID).toUpperCase(), 16);
+		File idFile = new File(persistentDirectory, ".id");
+		boolean writeIDPrefs = false, writeIDFile = false;
+
+		//check shared prefs first
+		Logger.i(this,"Reading device ID from preferences...");
+		try
+		{
+			id = preferences.getInt("id",-1);
+		}
+		catch(ClassCastException e){ }
+
+		//if this failed, check external storage
+		if (id < 0)
+		{
+			Logger.w(this,"Could not read ID from preferences, checking storage...");
+			writeIDPrefs = true;
+			if (Static.isExternalStorageReadable())
+			{
+				try
+				{
+					Scanner scanner = new Scanner(idFile);
+					while (id < 0 && scanner.hasNextInt(16))
+						id = scanner.nextInt(16);
+				} catch (Exception e) { }
+			}
+			else
+				Logger.e(this,"Storage was not available for reading!");
+		}
+
+		//if is still -1, generate a new one
+		if (id < 0)
+		{
+			Logger.w(this,"ID could not be found. Generating...");
+			writeIDFile = true;
+			id = 1 + (int) (2147483646 * new Random().nextDouble());
+		}
+
+		Logger.i(this,"ID: %s", Integer.toHexString(id));
+
+		//write if necessary
+		if (writeIDPrefs)
+			editor.putInt("id", id);
+		if (writeIDFile)
+		{
+			Logger.i(this,"Writing ID to storage...");
+			if (Static.isExternalStorageWritable())
+			{
+				try
+				{
+					FileOutputStream fOut = new FileOutputStream(idFile);
+					OutputStreamWriter osw = new OutputStreamWriter(fOut);
+					osw.write(Integer.toHexString(id) + "\n");
+					osw.flush();
+					osw.close();
+				}
+				catch (Exception e)
+				{
+					Logger.e(this,"An error occured while writing ID to storage.");
+				}
+			}
+			else
+				Logger.e(this,"Storage was not available for writing!");
+		}
 
 		//device type
 		properties.addProperty("dt", new VolatileProperty<String>(
@@ -132,7 +205,6 @@ public class MeshApplication extends Application
 			"sdk", new VolatileProperty<Integer>(android.os.Build.VERSION.SDK_INT, "%d", 30000));
 
 		//currently signed in user
-		SharedPreferences.Editor editor = preferences.edit();
 		long userID = 0;
 		try
 		{
@@ -145,8 +217,7 @@ public class MeshApplication extends Application
 			editor.putLong("userID", userID = 0);
 			editor.putLong("lastSignInTime", lastSignInTime = 0);
 		}
-		properties.addProperty(
-			"user", new VolatileProperty<Long>(userID, "%X", 15000));
+		properties.addProperty("user", new VolatileProperty<Long>(userID, "%X", 15000));
 
 		//battery level and charge state
 		properties.addProperty("batt", new FloatProperty(0.5f, "%.2f", 15000, 0.1f));
@@ -187,6 +258,16 @@ public class MeshApplication extends Application
 	// PUBLIC METHODS
 	/////////////////////////////////////////////////////////////////////
 
+	public String logTag()
+	{
+		return TAG;
+	}
+
+	public Context logContext()
+	{
+		return this;
+	}
+
 	public static final void setMeshService(MeshService service)
 	{
 		if ((meshService == null && service != null) || (meshService != null && service == null))
@@ -200,7 +281,7 @@ public class MeshApplication extends Application
 
 	public static final SystemManager systems() { return systemManager; }
 
-	public static final BigInteger getID()
+	public static final int getID()
 	{
 		return id;
 	}
@@ -301,6 +382,16 @@ public class MeshApplication extends Application
 			return;
 		}
 
+		if (Static.isExternalStorageWritable())
+		{
+			message = context.logContext().getResources().getString(R.string.external_storage_unavailable);
+			Toast.makeText(context.logContext(),
+				message,
+				Toast.LENGTH_LONG).show();
+			Logger.w(context, message);
+			return;
+
+		}
 
 		ArrayList<SignalStrengthReportItem> reportData = signalStrengthHistory;
 		signalStrengthHistory = new ArrayList<SignalStrengthReportItem>();
@@ -309,11 +400,9 @@ public class MeshApplication extends Application
 
 		try
 		{
-			File sdCard = Environment.getExternalStorageDirectory();
-			File dir = new File(sdCard.getAbsolutePath() + "/meshtester/signal_strengths");
+			File dir = new File(persistentDirectory.getAbsolutePath(),"/signal_strengths");
 			dir.mkdirs();
 			File file = new File(dir, filename);
-
 
 			FileOutputStream fOut = new FileOutputStream(file);
 			OutputStreamWriter osw = new OutputStreamWriter(fOut);
