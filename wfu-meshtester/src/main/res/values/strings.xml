@@ -18,6 +18,7 @@
     <string name="signal_strengths_saved_exception">%1$s thrown writing \'%2$s\' to SD card!</string>
     <string name="signal_strengths_none">No signal strengths have been recorded. Check your wifi settings.</string>
     <string name="export_signal_strengths">Export signal strengths</string>
+    <string name="external_storage_unavailable">The external storage volume is currently unavailable.</string>
 
     <!-- user page -->
     <string name="user_current">Current User</string>
