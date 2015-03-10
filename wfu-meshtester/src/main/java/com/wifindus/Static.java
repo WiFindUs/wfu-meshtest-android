@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.os.Build;
+import android.os.Environment;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
@@ -157,5 +158,24 @@ public abstract class Static
 				Math.sin(longitudeDistance/2.0) * Math.sin(longitudeDistance/2.0);
 
 		return (2.0 * Math.atan2(Math.sqrt(d), Math.sqrt(1.0-d))) * EARTH_RADIUS_MEAN * 1000.0;
+	}
+
+	public static boolean isExternalStorageWritable()
+	{
+		String state = Environment.getExternalStorageState();
+		if (Environment.MEDIA_MOUNTED.equals(state)) {
+			return true;
+		}
+		return false;
+	}
+
+	public static boolean isExternalStorageReadable()
+	{
+		String state = Environment.getExternalStorageState();
+		if (Environment.MEDIA_MOUNTED.equals(state) ||
+			Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+			return true;
+		}
+		return false;
 	}
 }
