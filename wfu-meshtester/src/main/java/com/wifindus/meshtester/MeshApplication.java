@@ -63,8 +63,8 @@ public class MeshApplication extends Application implements LogSender
 	//device info
 	private static volatile int id = -1;
 	private static volatile long lastSignInTime = 0;
-	private static volatile ConcurrentHashMap<Long, String> userNames
-		= new ConcurrentHashMap<Long, String>();
+	private static volatile ConcurrentHashMap<Integer, String> userNames
+		= new ConcurrentHashMap<Integer, String>();
 	private static volatile long lastLocationTime = 0;
 	private static volatile File persistentDirectory = null;
 
@@ -75,7 +75,7 @@ public class MeshApplication extends Application implements LogSender
 	private static volatile InetAddress meshInetAddress = null;
 	private static volatile String meshHostName = "";
 	private static volatile int meshNodeNumber = 0;
-	private static volatile long meshNodeID = -1;
+	private static volatile int meshNodeID = -1;
 
 	//network/server
 	private static volatile String serverHostName = "";
@@ -134,12 +134,22 @@ public class MeshApplication extends Application implements LogSender
 			writeIDPrefs = true;
 			if (Static.isExternalStorageReadable())
 			{
-				try
+				if (!idFile.exists())
+					Logger.e(this, "ID file did not exist in storage!");
+				else
 				{
-					Scanner scanner = new Scanner(idFile);
-					while (id < 0 && scanner.hasNextInt(16))
-						id = scanner.nextInt(16);
-				} catch (Exception e) { }
+					try
+					{
+						Scanner scanner = new Scanner(idFile);
+						while (id < 0 && scanner.hasNextInt(16))
+							id = scanner.nextInt(16);
+					}
+					catch (Exception e)
+					{
+						if (id < 0)
+							Logger.e(this, "ID could not be read from storage!");
+					}
+				}
 			}
 			else
 				Logger.e(this,"Storage was not available for reading!");
@@ -173,7 +183,7 @@ public class MeshApplication extends Application implements LogSender
 				}
 				catch (Exception e)
 				{
-					Logger.e(this,"An error occured while writing ID to storage.");
+					Logger.e(this, "ID could not be written to storage!");
 				}
 			}
 			else
@@ -205,10 +215,10 @@ public class MeshApplication extends Application implements LogSender
 			"sdk", new VolatileProperty<Integer>(android.os.Build.VERSION.SDK_INT, "%d", 30000));
 
 		//currently signed in user
-		long userID = 0;
+		int userID = 0;
 		try
 		{
-			userID = preferences.getLong("userID", 0);
+			userID = preferences.getInt("userID", 0);
 		}
 		catch(ClassCastException e){ }
 		lastSignInTime = preferences.getLong("lastSignInTime", 0);
@@ -217,7 +227,7 @@ public class MeshApplication extends Application implements LogSender
 			editor.putLong("userID", userID = 0);
 			editor.putLong("lastSignInTime", lastSignInTime = 0);
 		}
-		properties.addProperty("user", new VolatileProperty<Long>(userID, "%X", 15000));
+		properties.addProperty("user", new VolatileProperty<Integer>(userID, "%X", 15000));
 
 		//battery level and charge state
 		properties.addProperty("batt", new FloatProperty(0.5f, "%.2f", 15000, 0.1f));
@@ -457,7 +467,7 @@ public class MeshApplication extends Application implements LogSender
 		return lastLocationTime;
 	}
 
-	public static final long getUserID()
+	public static final int getUserID()
 	{
 		return getVolatileProperty("user");
 	}
@@ -494,7 +504,7 @@ public class MeshApplication extends Application implements LogSender
 
 	public static final String getUserName()
 	{
-		Long userID = getUserID();
+		Integer userID = getUserID();
 		if (userID == null || userID <= 0)
 			return "";
 		String name = userNames.get(userID);
@@ -542,7 +552,7 @@ public class MeshApplication extends Application implements LogSender
         Static.broadcastSimpleIntent(context, ACTION_UPDATE_LOCATION);
     }
 
-    public static final void updateUser(Context context, long userID)
+    public static final void updateUser(Context context, int userID)
     {
 		if ((userID = Math.max(userID,0)) == getUserID())
             return;
@@ -550,7 +560,7 @@ public class MeshApplication extends Application implements LogSender
         lastSignInTime = userID > 0 ? System.currentTimeMillis() : 0;
 
         SharedPreferences.Editor editor = preferences.edit();
-        editor.putLong("userID", userID);
+        editor.putInt("userID", userID);
         editor.putLong("lastSignInTime", lastSignInTime);
         editor.commit();
 

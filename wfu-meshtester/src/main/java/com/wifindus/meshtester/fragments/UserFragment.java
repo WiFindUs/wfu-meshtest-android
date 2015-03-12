@@ -59,8 +59,8 @@ public class UserFragment extends BaseFragment  {
     @Override
     public void update()
     {
-        long userID = MeshApplication.getUserID();
-        id.setText(userID > 0 ? Long.toHexString(userID).toUpperCase() : getResources().getString(R.string.user_no_id));
+        int userID = MeshApplication.getUserID();
+        id.setText(userID > 0 ? Integer.toHexString(userID).toUpperCase() : getResources().getString(R.string.user_no_id));
         name.setText(userID > 0 ? MeshApplication.getUserName() : "");
         signInOutButton.setText(userID > 0 ? R.string.user_logout : R.string.user_login);
         updateSignedInTime();
@@ -106,16 +106,16 @@ public class UserFragment extends BaseFragment  {
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface di, int i) {
 
-                            long userID = 0;
+                            int userID = 0;
                             try {
-                                userID = Long.parseLong(text.getText().toString().trim(), 16);
+                                userID = Integer.parseInt(text.getText().toString().trim(), 16);
                             } catch (NumberFormatException ex) {
                             }
                             MeshApplication.updateUser(UserFragment.this.getActivity(), userID);
                             update();
                             if (userID > 0)
                                 Toast.makeText(UserFragment.this.getActivity(),
-                                        getResources().getString(R.string.user_login_ok_toast, Long.toHexString(userID).toUpperCase()),
+                                        getResources().getString(R.string.user_login_ok_toast, Integer.toHexString(userID).toUpperCase()),
                                         Toast.LENGTH_LONG).show();
                         }
                     })
