@@ -221,7 +221,7 @@ public class LocationThread extends BaseThread implements LocationListener, GpsS
 
 				systems().getLocationManager().requestLocationUpdates(
 					timeout,
-					0.5f,
+					0f,
 					criteria,
 					LocationThread.this,
 					null
