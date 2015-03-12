@@ -113,7 +113,6 @@ public class NetworkThread extends BaseThread
 			if (wifiManagerState != WifiManager.WIFI_STATE_ENABLED)
 			{
 				MeshApplication.updateMeshConnected(logContext(), false);
-				MeshApplication.updateMeshAddress(logContext(), -1);
 				if (wifiManagerState != WifiManager.WIFI_STATE_ENABLING)
 				{
 					wifiManager.setWifiEnabled(true);
@@ -200,10 +199,7 @@ public class NetworkThread extends BaseThread
                 initiallyOnWifi = true;
 
                 if (onWiFindUsAP)
-                {
                     MeshApplication.updateMeshConnected(logContext(), true);
-                    MeshApplication.updateMeshAddress(logContext(), wifiInfo.getIpAddress());
-                }
 			}
             if (onWiFindUsAP)
                 Logger.i(this, "Currently on WFU mesh.");
@@ -255,7 +251,6 @@ public class NetworkThread extends BaseThread
 				{
 					Logger.i(this, "Current AP OK ("+currentAP.getMean()+"dbm).");
 					MeshApplication.updateMeshConnected(logContext(), true);
-					MeshApplication.updateMeshAddress(logContext(), wifiInfo.getIpAddress());
 					return;
 				}
 
@@ -267,7 +262,6 @@ public class NetworkThread extends BaseThread
 				{
 					Logger.e(this, "No WiFindUs AP's found.");
 					MeshApplication.updateMeshConnected(logContext(), false);
-					MeshApplication.updateMeshAddress(logContext(), -1);
 					return;
 				}
 
@@ -304,14 +298,12 @@ public class NetworkThread extends BaseThread
 						Logger.i(this, (onWiFindUsAP ? "Migrated" : "Connected") + " OK.");
 					else
 						Logger.w(this, (onWiFindUsAP ? "Migrated" : "Connected") + " OK, but different AP?");
-					MeshApplication.updateMeshAddress(logContext(), wifiInfo.getIpAddress());
 					MeshApplication.updateMeshConnected(logContext(), true);
 				}
 				else
 				{
 					if (!MeshApplication.isMeshConnected())
 						Logger.e(this, (onWiFindUsAP ? "Migrating" : "Connecting") + " to mesh failed!");
-					MeshApplication.updateMeshAddress(logContext(), -1);
 					MeshApplication.updateMeshConnected(logContext(), false);
 				}
 			}
@@ -319,7 +311,6 @@ public class NetworkThread extends BaseThread
 			{
 				Logger.e(this, "Wifi reconnection failed.");
 				MeshApplication.updateMeshConnected(logContext(), false);
-				MeshApplication.updateMeshAddress(logContext(), -1);
 			}
 		}
 		else
@@ -334,7 +325,6 @@ public class NetworkThread extends BaseThread
 					Logger.e(this, "Network connection lost.");
 			}
 			MeshApplication.updateMeshConnected(logContext(), connected);
-			MeshApplication.updateMeshAddress(logContext(), -1);
 		}
     }
 

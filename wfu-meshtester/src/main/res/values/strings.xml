@@ -22,7 +22,7 @@
 
     <!-- user page -->
     <string name="user_current">Current User</string>
-    <string name="user_id">ID:</string>
+    <string name="user_id">User ID:</string>
     <string name="user_name">Name:</string>
     <string name="user_logout">Sign out</string>
     <string name="user_login">Sign in</string>
@@ -41,8 +41,8 @@
     <string name="status_node_ip_address">Node IP:</string>
     <string name="status_mesh_network">Mesh Network</string>
     <string name="status_device">Device</string>
+    <string name="status_device_id">Device ID:</string>
     <string name="status_location">Location:</string>
-    <string name="status_hash">Hash:</string>
     <string name="status_last_cleaned">Update sent:</string>
     <string name="status_battery">Battery:</string>
     <string name="status_server">Server:</string>
@@ -64,6 +64,7 @@
     <string name="ping_results">Results</string>
     <string name="ping_start">Start pinging</string>
     <string name="ping_stop">Stop pinging</string>
+    <string name="log_auto_scroll">Automatically scroll log:</string>
 
 
 </resources>

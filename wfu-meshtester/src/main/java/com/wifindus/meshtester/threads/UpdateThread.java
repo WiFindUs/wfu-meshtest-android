@@ -11,6 +11,7 @@ import com.wifindus.logs.Logger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.util.regex.Pattern;
 
 /**
  * Created by marzer on 25/04/2014.
@@ -19,6 +20,10 @@ public class UpdateThread extends BaseThread
 {
     private static final String TAG = UpdateThread.class.getName();
     private volatile DatagramSocket updateSocket;
+	private static final Pattern PATTERN_POINT_ZERO
+		= Pattern.compile("[.]0+[|]", Pattern.CASE_INSENSITIVE);
+	private static final Pattern PATTERN_TRAILING_ZEROES
+		= Pattern.compile("00+[|]", Pattern.CASE_INSENSITIVE);
 
     /////////////////////////////////////////////////////////////////////
     // CONSTRUCTORS
@@ -78,8 +83,10 @@ public class UpdateThread extends BaseThread
 		String payload = MeshApplication.updatePacketPayload();
         if (payload.length() == 0)
             return;
-		payload = Static.PATTERN_TRAILING_ZEROES.matcher(payload).replaceAll(".0");
-		payload = Static.PATTERN_FLOAT_ZERO.matcher(payload).replaceAll("0");
+		payload = PATTERN_TRAILING_ZEROES.matcher(payload).replaceAll("0|");
+		payload = PATTERN_POINT_ZERO.matcher(payload).replaceAll("|");
+
+
 
 		//generate message content
 		String message = "EYE{DEV|" + Integer.toHexString(MeshApplication.getID()).toUpperCase()

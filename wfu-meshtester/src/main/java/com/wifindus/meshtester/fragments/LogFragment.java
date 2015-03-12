@@ -5,9 +5,11 @@ import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.wifindus.meshtester.MeshApplication;
 import com.wifindus.meshtester.R;
 import com.wifindus.logs.Logger;
 import com.wifindus.logs.LoggerItem;
@@ -20,6 +22,7 @@ public class LogFragment extends BaseFragment
 {
     private TextView logText = null;
     private ScrollView logScroll = null;
+	private CheckBox autoScrollLog;
     private static final Pattern PATTERN_OK = Pattern.compile("\\b(OK)\\b",Pattern.CASE_INSENSITIVE);
     private static final String TAG = LogFragment.class.getName();
 
@@ -28,12 +31,20 @@ public class LogFragment extends BaseFragment
         // Required empty public constructor
     }
 
+	@Override
+	public String logTag(){
+		return TAG;
+	}
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
     {
         View view = inflater.inflate(R.layout.fragment_log, container, false);
         logText = (TextView)view.findViewById(R.id.text);
         logScroll = (ScrollView)view.findViewById(R.id.scroll);
+		autoScrollLog = (CheckBox)view.findViewById(R.id.log_auto_scroll);
+		autoScrollLog.setChecked(MeshApplication.getAutoScrollLog());
+		autoScrollLog.setOnClickListener(autoScrollLogClickListener);
         return view;
     }
 
@@ -80,7 +91,8 @@ public class LogFragment extends BaseFragment
             sb.append("<br>\n");
         }
         logText.append(Html.fromHtml(sb.toString()));
-        logScroll.post(new Runnable() {
+		if (autoScrollLog.isChecked())
+        	logScroll.post(new Runnable() {
             @Override
             public void run() {
                 logScroll.fullScroll(View.FOCUS_DOWN);
@@ -88,8 +100,21 @@ public class LogFragment extends BaseFragment
         });
     }
 
-    @Override
-    public String logTag(){
-        return TAG;
-    }
+	private View.OnClickListener autoScrollLogClickListener = new View.OnClickListener()
+	{
+		@Override
+		public void onClick(View view)
+		{
+			if (view != autoScrollLog)
+				return;
+			MeshApplication.setAutoScrollLog(autoScrollLog.isChecked());
+			if (autoScrollLog.isChecked())
+				logScroll.post(new Runnable() {
+					@Override
+					public void run() {
+						logScroll.fullScroll(View.FOCUS_DOWN);
+					}
+				});
+		}
+	};
 }

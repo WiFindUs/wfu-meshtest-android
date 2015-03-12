@@ -2,6 +2,7 @@ package com.wifindus.properties;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
 * Created by marzer on 20/02/2015.
@@ -10,6 +11,7 @@ public class VolatilePropertyList
 {
 	private final ConcurrentHashMap<String, VolatilePropertyProxy> properties
 		= new ConcurrentHashMap<String, VolatilePropertyProxy>();
+	private final CopyOnWriteArrayList<String> blacklist = new CopyOnWriteArrayList<String>();
 	private final String separator;
 	private final String format;
 
@@ -68,11 +70,13 @@ public class VolatilePropertyList
 		}
 	}
 
-	public String formattedValues(boolean printCleanValues, boolean printDirtyValues, boolean cleanDirtyValues)
+	public String flushList(boolean printCleanValues, boolean printDirtyValues, boolean cleanDirtyValues)
 	{
 		StringBuilder sb = new StringBuilder();
 		for (Map.Entry<String, VolatilePropertyProxy> entry : properties.entrySet())
 		{
+			if (blacklist.contains(entry.getKey()))
+				continue;
 			boolean dirty = entry.getValue().isDirty();
 			if (dirty && !printDirtyValues)
 				continue;
@@ -86,5 +90,31 @@ public class VolatilePropertyList
 				entry.getValue().clean();
 		}
 		return sb.toString();
+	}
+
+	public void addToBlacklist(String... keys)
+	{
+		if (keys == null || keys.length == 0)
+			return;
+		for (String k : keys)
+		{
+			String key = k.trim();
+			if (key.length() == 0 || blacklist.contains(key))
+				continue;
+			blacklist.add(key);
+		}
+	}
+
+	public void removeFromBlacklist(String... keys)
+	{
+		if (keys == null || keys.length == 0)
+			return;
+		for (String k : keys)
+		{
+			String key = k.trim();
+			if (key.length() == 0 || !blacklist.contains(key))
+				continue;
+			blacklist.remove(key);
+		}
 	}
 }

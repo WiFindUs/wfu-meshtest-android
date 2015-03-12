@@ -24,8 +24,8 @@ import java.util.regex.Matcher;
 
 public class StatusFragment extends BaseFragment
 {
-    private TextView connectionState, connectedSince, meshAddress,
-            node, nodeAddress, id, uptime, location, lastCleaned, battery, server,
+    private TextView connectionState, connectedSince,
+		 id, uptime, location, battery, server,
             locationTime;
 	private CheckBox forceMeshNetwork;
     private Handler timerHandler = new Handler();
@@ -43,16 +43,11 @@ public class StatusFragment extends BaseFragment
 
         connectionState = (TextView)view.findViewById(R.id.field_mesh_state);
         connectedSince = (TextView)view.findViewById(R.id.field_mesh_uptime);
-        meshAddress = (TextView)view.findViewById(R.id.field_mesh_ip_address);
-        node = (TextView)view.findViewById(R.id.field_mesh_node);
-        nodeAddress = (TextView)view.findViewById(R.id.field_mesh_node_ip_address);
 		id = (TextView)view.findViewById(R.id.field_hash);
         uptime = (TextView)view.findViewById(R.id.field_uptime);
         location = (TextView)view.findViewById(R.id.field_location);
-        lastCleaned = (TextView)view.findViewById(R.id.field_mesh_last_cleaned);
 		battery = (TextView)view.findViewById(R.id.field_battery);
         locationTime = (TextView)view.findViewById(R.id.field_device_last_location);
-
 		server = (TextView)view.findViewById(R.id.field_mesh_server);
 		server.setText(getResources().getString(R.string.data_host_port,MeshApplication.getServerHostName(),MeshApplication.getServerPort()));
 		server.setClickable(true);
@@ -84,24 +79,7 @@ public class StatusFragment extends BaseFragment
     public void update()
     {
 		id.setText(Integer.toHexString(MeshApplication.getID()).toUpperCase());
-        if (MeshApplication.isMeshConnected())
-        {
-            connectionState.setText("Yes");
-            meshAddress.setText(MeshApplication.getMeshHostName());
-
-            //todo
-            node.setText("");
-            nodeAddress.setText("");
-        }
-        else
-        {
-            connectionState.setText("No");
-            meshAddress.setText("");
-
-            //todo
-            node.setText("");
-            nodeAddress.setText("");
-        }
+        connectionState.setText(MeshApplication.isMeshConnected() ? "Yes" : "No");
 
 		Double latitude = MeshApplication.getLatitude();
 		Double longitude = MeshApplication.getLongitude();
@@ -122,23 +100,13 @@ public class StatusFragment extends BaseFragment
 
     private void updateUptime()
     {
-        long time = System.currentTimeMillis();
-        if (MeshApplication.isMeshConnected())
-        {
-            connectedSince.setText(
-                Static.formatTimer(time - MeshApplication.getMeshConnectedSince()) + " ago");
-        }
-        else
-        {
-            connectedSince.setText("");
-            lastCleaned.setText("");
-        }
-
+        long time = SystemClock.elapsedRealtime();
+		connectedSince.setText(MeshApplication.isMeshConnected() ?
+			Static.formatTimer(time - MeshApplication.getMeshConnectedSince()) + " ago"
+				: "");
         locationTime.setText(MeshApplication.getLocationTime() == 0 ? "" :
                 Static.formatTimer(time - MeshApplication.getLocationTime()) + " ago");
-
         uptime.setText(Static.formatTimer(SystemClock.uptimeMillis()) + " ago");
-
     }
 
     private Runnable timerRunnable = new Runnable()

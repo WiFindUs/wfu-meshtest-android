@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Environment;
 import android.os.StrictMode;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -44,7 +45,6 @@ public class MeshApplication extends Application implements LogSender
 
 	public static final String ACTION_PREFIX = "WFU_";
 	public static final String ACTION_UPDATE_LOCATION = MeshApplication.ACTION_PREFIX + "UPDATE_LOCATION";
-	public static final String ACTION_UPDATE_MESH_ADDRESS = MeshApplication.ACTION_PREFIX + "UPDATE_MESH_ADDRESS";
 	public static final String ACTION_UPDATE_CONNECTION_STATE = MeshApplication.ACTION_PREFIX + "UPDATE_CONNECTION_STATE";
 	public static final String ACTION_UPDATE_USER = MeshApplication.ACTION_PREFIX + "UPDATE_USER";
 	public static final String ACTION_UPDATE_PINGS = MeshApplication.ACTION_PREFIX + "UPDATE_PINGS";
@@ -55,6 +55,7 @@ public class MeshApplication extends Application implements LogSender
 	private static volatile MeshService meshService = null;
 	private static volatile SystemManager systemManager = null;
 	private static volatile SharedPreferences preferences = null;
+	private static volatile boolean autoScrollLog = true;
 
 	//overall status
 	private static final VolatilePropertyList properties
@@ -71,11 +72,6 @@ public class MeshApplication extends Application implements LogSender
 	//mesh status
 	private static volatile boolean meshConnected = false;
 	private static volatile long meshConnectedSince = 0;
-	private static volatile int meshAddress = 0;
-	private static volatile InetAddress meshInetAddress = null;
-	private static volatile String meshHostName = "";
-	private static volatile int meshNodeNumber = 0;
-	private static volatile int meshNodeID = -1;
 
 	//network/server
 	private static volatile String serverHostName = "";
@@ -163,7 +159,7 @@ public class MeshApplication extends Application implements LogSender
 			id = 1 + (int) (2147483646 * new Random().nextDouble());
 		}
 
-		Logger.i(this,"ID: %s", Integer.toHexString(id));
+		Logger.i(this,"ID: %s OK", Integer.toHexString(id));
 
 		//write if necessary
 		if (writeIDPrefs)
@@ -180,6 +176,7 @@ public class MeshApplication extends Application implements LogSender
 					osw.write(Integer.toHexString(id) + "\n");
 					osw.flush();
 					osw.close();
+					Logger.i(this,"ID written to storage OK");
 				}
 				catch (Exception e)
 				{
@@ -195,7 +192,7 @@ public class MeshApplication extends Application implements LogSender
 			systems().getTelephonyManager() == null
 				|| systems().getTelephonyManager().getPhoneType() == TelephonyManager.PHONE_TYPE_NONE ? "TAB" : "PHO",
 			"%s",
-			30000
+			60000
 		));
 
 		//device android version
@@ -208,11 +205,11 @@ public class MeshApplication extends Application implements LogSender
 		{
 			versionString = "NULL";
 		}
-		properties.addProperty("ver", new VolatileProperty<String>(versionString, "%s", 30000));
+		properties.addProperty("ver", new VolatileProperty<String>(versionString, "%s", 60000));
 
 		//device android sdk level
 		properties.addProperty(
-			"sdk", new VolatileProperty<Integer>(android.os.Build.VERSION.SDK_INT, "%d", 30000));
+			"sdk", new VolatileProperty<Integer>(android.os.Build.VERSION.SDK_INT, "%d", 60000));
 
 		//currently signed in user
 		int userID = 0;
@@ -227,17 +224,20 @@ public class MeshApplication extends Application implements LogSender
 			editor.putLong("userID", userID = 0);
 			editor.putLong("lastSignInTime", lastSignInTime = 0);
 		}
-		properties.addProperty("user", new VolatileProperty<Integer>(userID, "%X", 15000));
+		properties.addProperty("user", new VolatileProperty<Integer>(userID, "%X", 30000));
 
 		//battery level and charge state
-		properties.addProperty("batt", new FloatProperty(0.5f, "%.2f", 15000, 0.1f));
-		properties.addProperty("chg", new VolatileProperty<Integer>(0, "%d", 15000));
+		properties.addProperty("batt", new FloatProperty(0.5f, "%.2f", 30000, 0.1f));
+		properties.addProperty("chg", new VolatileProperty<Integer>(0, "%d", 30000));
 
 		//device location
-		properties.addProperty("lat", new DoubleProperty(null, "%.6f", 5000));
-		properties.addProperty("long", new DoubleProperty(null, "%.6f", 5000));
-		properties.addProperty("acc", new FloatProperty(null, "%.2f", 5000));
-		properties.addProperty("alt", new DoubleProperty(null, "%.2f", 5000));
+		properties.addProperty("gps", new VolatileProperty<Integer>(0, "%d", 10000));
+		properties.addProperty("fix", new VolatileProperty<Integer>(0, "%d", 10000));
+		properties.addProperty("lat", new DoubleProperty(null, "%.6f", 10000, 0.000001));
+		properties.addProperty("long", new DoubleProperty(null, "%.6f", 10000, 0.000001));
+		properties.addProperty("acc", new FloatProperty(null, "%.2f", 10000, 0.1f));
+		properties.addProperty("alt", new DoubleProperty(null, "%.2f", 10000, 1.0));
+		properties.addToBlacklist("fix","lat","long","acc","alt");
 
 		//server IP address and port
 		serverHostName = preferences.getString("serverHostName", "");
@@ -261,7 +261,7 @@ public class MeshApplication extends Application implements LogSender
 		//force mesh usage
 		forceMeshConnection = preferences.getBoolean("forceMeshConnection", true);
 
-		editor.commit();
+		editor.apply();
 	}
 
 	/////////////////////////////////////////////////////////////////////
@@ -304,7 +304,18 @@ public class MeshApplication extends Application implements LogSender
 			return;
 		SharedPreferences.Editor editor = preferences.edit();
 		editor.putBoolean("forceMeshConnection", forceMeshConnection = force);
-		editor.commit();
+		editor.apply();
+	}
+
+	public static final boolean getAutoScrollLog() { return autoScrollLog; }
+
+	public static final void setAutoScrollLog(boolean auto)
+	{
+		if (auto == autoScrollLog)
+			return;
+		SharedPreferences.Editor editor = preferences.edit();
+		editor.putBoolean("autoScrollLog", autoScrollLog = auto);
+		editor.apply();
 	}
 
 	public static final int getServerPort()
@@ -373,7 +384,7 @@ public class MeshApplication extends Application implements LogSender
 		if (changePort)
 			editor.putInt("serverPort", serverPort = port);
 
-		editor.commit();
+		editor.apply();
 		Static.broadcastSimpleIntent(context, ACTION_UPDATE_SERVER);
 		return true;
 	}
@@ -452,16 +463,6 @@ public class MeshApplication extends Application implements LogSender
 		return getVolatileProperty("long");
 	}
 
-	public static final Float getAccuracy()
-	{
-		return getVolatileProperty("acc");
-	}
-
-	public static final Double getAltitude()
-	{
-		return getVolatileProperty("alt");
-	}
-
 	public static final long getLocationTime()
 	{
 		return lastLocationTime;
@@ -482,24 +483,9 @@ public class MeshApplication extends Application implements LogSender
 		return meshConnectedSince;
 	}
 
-	public static final InetAddress getMeshAddress()
-	{
-		return meshInetAddress;
-	}
-
-	public static final String getMeshHostName()
-	{
-		return meshHostName;
-	}
-
 	public static final long getUserSignedInSince()
 	{
 		return lastSignInTime;
-	}
-
-	public static final String getDeviceType()
-	{
-		return getVolatileProperty("dt");
 	}
 
 	public static final String getUserName()
@@ -526,30 +512,63 @@ public class MeshApplication extends Application implements LogSender
         return nodePings;
     }
 
-    public static final void updateLocation(Context context, Location loc)
+	public static final void updateGPSEnabled(LogSender context, boolean gpsEnabled)
+	{
+		if (((Integer)getVolatileProperty("gps") == 1) == gpsEnabled)
+			return;
+		setVolatileProperty("gps",gpsEnabled ? 1 : 0);
+		updateGPSBlacklist();
+	}
+
+	public static final void updateGPSHasFix(LogSender context, boolean gpsHasFix)
+	{
+		if (((Integer)getVolatileProperty("fix") == 1) == gpsHasFix)
+			return;
+		setVolatileProperty("fix",gpsHasFix ? 1 : 0);
+		updateGPSBlacklist();
+	}
+
+	private static final void updateGPSBlacklist()
+	{
+		if ((Integer)getVolatileProperty("gps") == 1)
+		{
+			properties.removeFromBlacklist("fix");
+			if ((Integer)getVolatileProperty("fix") == 1)
+				properties.removeFromBlacklist("lat","long","acc","alt");
+			else
+				properties.addToBlacklist("lat","long","acc","alt");
+		}
+		else
+			properties.addToBlacklist("fix","lat","long","acc","alt");
+	}
+
+    public static final void updateLocation(LogSender context, Location loc)
     {
         if (loc == null)
 		{
 			setVolatileProperty("lat",null);
 			setVolatileProperty("long",null);
 			setVolatileProperty("alt",null);
-			setVolatileProperty("acc",null);
+			setVolatileProperty("acc",1000.0);
 			return;
 		}
 
+		if (!loc.hasAccuracy())
+			return;
+
 		Double latitude = getLatitude();
 		Double longitude = getLongitude();
-		if (latitude != null && longitude != null
-			&& Static.distanceTo(loc.getLatitude(),loc.getLongitude(),latitude,longitude) <= 0.5)
-			return;
+		Double distance = (latitude == null || longitude == null ? 0.0
+			: Static.distanceTo(loc.getLatitude(),loc.getLongitude(),latitude,longitude));
 
 		setVolatileProperty("lat",loc.getLatitude());
 		setVolatileProperty("long",loc.getLongitude());
+		setVolatileProperty("acc",loc.getAccuracy());
 		setVolatileProperty("alt",loc.hasAltitude() ? loc.getAltitude() : null);
-		setVolatileProperty("acc",loc.hasAccuracy() ? loc.getAccuracy() : null);
-        lastLocationTime = System.currentTimeMillis();
 
-        Static.broadcastSimpleIntent(context, ACTION_UPDATE_LOCATION);
+        lastLocationTime = SystemClock.elapsedRealtime();
+
+        Static.broadcastSimpleIntent(context.logContext(), ACTION_UPDATE_LOCATION);
     }
 
     public static final void updateUser(Context context, int userID)
@@ -562,7 +581,7 @@ public class MeshApplication extends Application implements LogSender
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("userID", userID);
         editor.putLong("lastSignInTime", lastSignInTime);
-        editor.commit();
+        editor.apply();
 
         Static.broadcastSimpleIntent(context, ACTION_UPDATE_USER);
     }
@@ -572,42 +591,8 @@ public class MeshApplication extends Application implements LogSender
         if (connected == meshConnected)
             return;
         meshConnected = connected;
-        meshConnectedSince = connected ? System.currentTimeMillis() : 0;
+        meshConnectedSince = connected ? SystemClock.elapsedRealtime() : 0;
         Static.broadcastSimpleIntent(context, ACTION_UPDATE_CONNECTION_STATE);
-    }
-
-    public static final void updateMeshAddress(Context context, int address)
-    {
-        if (meshAddress == address)
-            return;
-
-        meshAddress = address;
-
-        if (meshAddress > 0)
-        {
-            try
-            {
-                meshInetAddress = InetAddress.getByName(String.format(
-                        "%d.%d.%d.%d",
-                        (meshAddress & 0xff),
-                        (meshAddress >> 8 & 0xff),
-                        (meshAddress >> 16 & 0xff),
-                        (meshAddress >> 24 & 0xff)));
-                meshHostName = meshInetAddress.getHostName();
-            }
-            catch (UnknownHostException e)
-            {
-                meshInetAddress = null;
-                meshHostName = "";
-            }
-        }
-        else
-		{
-            meshInetAddress = null;
-            meshHostName = "";
-        }
-
-        Static.broadcastSimpleIntent(context, ACTION_UPDATE_MESH_ADDRESS);
     }
 
 	public static void updateBatteryStats(Context context, float percentage, boolean charging)
@@ -666,7 +651,7 @@ public class MeshApplication extends Application implements LogSender
 
 	public static String updatePacketPayload()
 	{
-		return properties.formattedValues(false,true,true);
+		return properties.flushList(false,true,true);
 	}
 }
 

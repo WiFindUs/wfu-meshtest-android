@@ -1,5 +1,7 @@
 package com.wifindus.properties;
 
+import android.util.Log;
+
 /**
  * Created by marzer on 20/02/2015.
  */
@@ -20,6 +22,9 @@ public class DoubleProperty extends NumericProperty<Double>
 	{
 		if (super.equalityCheck(v))
 			return true;
+
+		if ((v == null && value != null) || (v != null && value == null)) //one is null
+			return false;
 
 		if (Double.isNaN(value) && Double.isNaN(v))
 			return true;

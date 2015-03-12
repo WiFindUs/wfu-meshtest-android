@@ -1,5 +1,7 @@
 package com.wifindus.properties;
 
+import android.os.SystemClock;
+
 /**
  * Created by marzer on 20/02/2015.
  */
@@ -34,7 +36,7 @@ public class VolatileProperty<T> implements VolatilePropertyProxy
 
 	public final boolean isDirty()
 	{
-		return lastTimeout < 0 || (System.currentTimeMillis() - lastTimeout) >= timeout;
+		return lastTimeout < 0 || (SystemClock.elapsedRealtime() - lastTimeout) >= timeout;
 	}
 
 	public final void setValue(T v)
@@ -47,10 +49,12 @@ public class VolatileProperty<T> implements VolatilePropertyProxy
 
 	protected boolean equalityCheck(T v)
 	{
-		if (v == value) //the same instance or both null
+		if (v == null && value == null) //both null
 			return true;
-		if ((v == null && value != null) || (v != null && value == null)) //one is null
-			return false;
+
+		if (v == value) //the same instance
+			return true;
+
 		return v.equals(value);
 	}
 
@@ -71,6 +75,6 @@ public class VolatileProperty<T> implements VolatilePropertyProxy
 
 	public final void clean()
 	{
-		lastTimeout = System.currentTimeMillis();
+		lastTimeout = SystemClock.elapsedRealtime();
 	}
 }

@@ -9,11 +9,9 @@ public class SignalStrengthReportItem
 {
     private SignalStrengthData data;
     private Double latitude, longitude;
-    private long timestamp;
 
     public SignalStrengthReportItem(SignalStrengthData data, Double latitude, Double longitude)
     {
-        timestamp = System.currentTimeMillis();
         this.data = data;
         this.latitude = latitude;
 		this.longitude = longitude;

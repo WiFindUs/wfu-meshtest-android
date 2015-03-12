@@ -46,10 +46,6 @@ public abstract class Static
 		//port (optional)
 		+ "([:][0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])?"
 		+"\\s*", Pattern.CASE_INSENSITIVE);
-	public static final Pattern PATTERN_TRAILING_ZEROES
-		= Pattern.compile("\\.00+", Pattern.CASE_INSENSITIVE);
-	public static final Pattern PATTERN_FLOAT_ZERO
-		= Pattern.compile("0.0+", Pattern.CASE_INSENSITIVE);
 
     /**
      * Detect if the system's Airplane mode is turned on.
@@ -151,10 +147,10 @@ public abstract class Static
 
 	public static double distanceTo(double latA, double longA, double latB, double longB)
 	{
-		double latitudeDistance = (latA - latB) * DEGREES_TO_RADIANS;
-		double longitudeDistance = (longA - longB) * DEGREES_TO_RADIANS;
+		double latitudeDistance = Math.toRadians(latA - latB);
+		double longitudeDistance = Math.toRadians(longA - longB);
 		double d = Math.sin(latitudeDistance/2.0) * Math.sin(latitudeDistance/2.0) +
-			Math.cos(latB * DEGREES_TO_RADIANS) * Math.cos(latA * DEGREES_TO_RADIANS) *
+			Math.cos(Math.toRadians(latB)) * Math.cos(Math.toRadians(latA)) *
 				Math.sin(longitudeDistance/2.0) * Math.sin(longitudeDistance/2.0);
 
 		return (2.0 * Math.atan2(Math.sqrt(d), Math.sqrt(1.0-d))) * EARTH_RADIUS_MEAN * 1000.0;

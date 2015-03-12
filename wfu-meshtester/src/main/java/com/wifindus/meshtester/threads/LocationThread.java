@@ -3,12 +3,14 @@ package com.wifindus.meshtester.threads;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
+import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 
 import com.wifindus.BaseThread;
 import com.wifindus.meshtester.MeshApplication;
@@ -17,7 +19,7 @@ import com.wifindus.logs.Logger;
 /**
  * Created by marzer on 25/04/2014.
  */
-public class LocationThread extends BaseThread implements LocationListener
+public class LocationThread extends BaseThread implements LocationListener, GpsStatus.Listener
 {
     private static final String TAG = LocationThread.class.getName();
     private static final int TWO_MINUTES = 1000 * 60 * 2;
@@ -26,9 +28,11 @@ public class LocationThread extends BaseThread implements LocationListener
     private Handler handler = null;
     private boolean ok = false;
     private volatile Location location = null;
-	private float batt = 1.0f;
     private boolean hasRegistered = false;
 	private long timeout = -1;
+	private long lastLocationTime = 0;
+	private int gpsEnabled = -1;
+
 
     /////////////////////////////////////////////////////////////////////
     // CONSTRUCTORS
@@ -50,21 +54,21 @@ public class LocationThread extends BaseThread implements LocationListener
 
     @Override
     public void onLocationChanged(Location location)
-    {
-        assessLocation(location);
+	{
+        if (location == null)
+			return;
+		lastLocationTime = SystemClock.elapsedRealtime();
+		assessLocation(location);
     }
 
     @Override
     public void onProviderDisabled(String provider)
     {
-
     }
 
     @Override
     public void onProviderEnabled(String provider)
     {
-
-
     }
 
     @Override
@@ -73,7 +77,19 @@ public class LocationThread extends BaseThread implements LocationListener
 
     }
 
-    /////////////////////////////////////////////////////////////////////
+	@Override
+	public void onGpsStatusChanged(int event)
+	{
+		switch (event)
+		{
+			case GpsStatus.GPS_EVENT_FIRST_FIX:
+				lastLocationTime = SystemClock.elapsedRealtime();
+				break;
+		}
+
+	}
+
+	/////////////////////////////////////////////////////////////////////
     // PROTECTED METHODS
     /////////////////////////////////////////////////////////////////////
 
@@ -101,19 +117,19 @@ public class LocationThread extends BaseThread implements LocationListener
         }
 		timeout = timeoutLength();
 		registerLocationUpdateListener();
-        assessLocation(systems().getLocationManager().getLastKnownLocation(LocationManager.GPS_PROVIDER));
+		checkGPSEnabled();
+		if (gpsEnabled == 1)
+        	assessLocation(systems().getLocationManager().getLastKnownLocation(LocationManager.GPS_PROVIDER));
         ok = true;
-
-		if (!systems().getLocationManager().isProviderEnabled(LocationManager.GPS_PROVIDER))
-			Logger.w(this, "GPS is disabled!");
-
         Logger.i(this, "Location thread OK.");
     }
 
     @Override
     protected void iteration()
     {
-		assessLocation(systems().getLocationManager().getLastKnownLocation(LocationManager.GPS_PROVIDER));
+		checkGPSEnabled();
+		MeshApplication.updateGPSHasFix(this,
+			gpsEnabled == 1 && (SystemClock.elapsedRealtime() - lastLocationTime) < 15000);
 
 		//check battery level shifts
 		long newTimeout = timeoutLength();
@@ -137,13 +153,14 @@ public class LocationThread extends BaseThread implements LocationListener
             {
                 Logger.i(LocationThread.this, "Un-registering location updates");
                 systems().getLocationManager().removeUpdates(LocationThread.this);
+				systems().getLocationManager().removeGpsStatusListener(LocationThread.this);
                 hasRegistered = false;
             }
         });
     }
 
     //see: http://developer.android.com/guide/topics/location/strategies.html
-    protected boolean isBetterLocation(Location location, Location currentBestLocation)
+    private boolean isBetterLocation(Location location, Location currentBestLocation)
     {
         if (location == null)
             return false;
@@ -186,7 +203,10 @@ public class LocationThread extends BaseThread implements LocationListener
 			@Override
 			public void run()
 			{
-				if (hasRegistered) {
+				if (!hasRegistered)
+					systems().getLocationManager().addGpsStatusListener(LocationThread.this);
+				else
+				{
                     systems().getLocationManager().removeUpdates(LocationThread.this);
 					Logger.i(LocationThread.this, "Un-registered previous location updates");
                 }
@@ -201,7 +221,7 @@ public class LocationThread extends BaseThread implements LocationListener
 
 				systems().getLocationManager().requestLocationUpdates(
 					timeout,
-					5,
+					0.5f,
 					criteria,
 					LocationThread.this,
 					null
@@ -220,12 +240,24 @@ public class LocationThread extends BaseThread implements LocationListener
         return provider1.equals(provider2);
     }
 
+	private void checkGPSEnabled()
+	{
+		int newGpsEnabled = systems().getLocationManager().isProviderEnabled(LocationManager.GPS_PROVIDER) ? 1 : 0;
+		if (newGpsEnabled != gpsEnabled)
+		{
+			gpsEnabled = newGpsEnabled;
+			if (gpsEnabled == 0)
+				Logger.w(this, "GPS is disabled!");
+			MeshApplication.updateGPSEnabled(this,gpsEnabled == 1);
+		}
+	}
+
     private void assessLocation(Location newLoc)
     {
         if (isBetterLocation(newLoc, location))
         {
             location = newLoc;
-            MeshApplication.updateLocation(logContext(), new Location(location));
+            MeshApplication.updateLocation(this, new Location(location));
         }
     }
 }
