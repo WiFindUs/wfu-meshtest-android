@@ -98,6 +98,10 @@ public class NetworkThread extends BaseThread
 			Logger.w(this, "Airplane mode is on; network functions may not work!");
 
 		Logger.i(this, "WiFi thread OK.");
+
+		//create/identify WFU network configuration
+		if (wifindus_public == null)
+			wifindus_public = getWifindusConfiguration();
     }
 
     @Override
@@ -145,44 +149,7 @@ public class NetworkThread extends BaseThread
 
 			//create/identify WFU network configuration
 			if (wifindus_public == null)
-			{
-				Logger.i(this, "Creating WiFindUs network profile...");
-				List<WifiConfiguration> items = wifiManager.getConfiguredNetworks();
-				boolean isNew = false;
-				for (WifiConfiguration item : items)
-				{
-                    if (compareSSIDs(item.SSID,WIFI_SSID))
-					{
-						wifindus_public = item;
-						break;
-					}
-				}
-				if (wifindus_public == null)
-				{
-					wifindus_public = new WifiConfiguration();
-					isNew = true;
-				}
-				wifindus_public.SSID = "\"" + WIFI_SSID + "\"";
-				wifindus_public.preSharedKey = "\"" + WIFI_PSK + "\"";
-				wifindus_public.status = WifiConfiguration.Status.ENABLED;
-				wifindus_public.hiddenSSID = true;
-				wifindus_public.priority = 99999;
-				wifindus_public.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
-				wifindus_public.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
-				wifindus_public.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
-				wifindus_public.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
-				wifindus_public.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
-				wifindus_public.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
-				wifindus_public.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
-				wifindus_public.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-				wifindus_public.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
-				wifindus_public.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
-				if (isNew)
-					wifiManager.addNetwork(wifindus_public);
-				else
-					wifiManager.updateNetwork(wifindus_public);
-				wifiManager.saveConfiguration();
-			}
+				wifindus_public = getWifindusConfiguration();
 
 			if (isCancelled())
 				return;
@@ -331,8 +298,6 @@ public class NetworkThread extends BaseThread
     @Override
     protected void cleanup()
     {
-        //if (wifindus_public != null && wifindus_public.networkId > -1)
-        //    wifiManager.removeNetwork(wifindus_public.networkId);
         if (wifiLock != null && wifiLock.isHeld())
             wifiLock.release();
     }
@@ -393,4 +358,51 @@ public class NetworkThread extends BaseThread
     {
         return formatSSID(ssidA).compareTo(formatSSID(ssidB)) == 0;
     }
+
+	private WifiConfiguration getWifindusConfiguration()
+	{
+		//create/identify WFU network configuration
+		WifiConfiguration config = null;
+
+		Logger.i(this, "Searching for WiFi profile...");
+		List<WifiConfiguration> items = wifiManager.getConfiguredNetworks();
+		boolean isNew = false;
+		for (WifiConfiguration item : items)
+		{
+			if (compareSSIDs(item.SSID, WIFI_SSID))
+			{
+				config = item;
+				break;
+			}
+		}
+		if (config == null)
+		{
+			config = new WifiConfiguration();
+			isNew = true;
+			Logger.w(this, "WiFi profile not found! Creating...");
+			config.SSID = "\"" + WIFI_SSID + "\"";
+			config.preSharedKey = "\"" + WIFI_PSK + "\"";
+			config.priority = 99999;
+			config.status = WifiConfiguration.Status.ENABLED;
+		}
+		else
+			Logger.i(this, "WiFi profile found OK.");
+		config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+		config.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
+		config.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
+		config.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
+		config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+		config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
+		config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+		config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+		config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
+		config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
+		if (isNew)
+			wifiManager.addNetwork(config);
+		else
+			wifiManager.updateNetwork(config);
+		wifiManager.saveConfiguration();
+
+		return config;
+	}
 }
