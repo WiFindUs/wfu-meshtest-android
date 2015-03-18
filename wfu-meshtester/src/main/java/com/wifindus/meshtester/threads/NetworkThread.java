@@ -398,7 +398,10 @@ public class NetworkThread extends BaseThread
 		config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
 		config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
 		if (isNew)
+		{
 			wifiManager.addNetwork(config);
+			Logger.i(this, "WiFi profile created OK.");
+		}
 		else
 			wifiManager.updateNetwork(config);
 		wifiManager.saveConfiguration();
