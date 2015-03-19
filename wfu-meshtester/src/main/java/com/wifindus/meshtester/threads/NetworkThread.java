@@ -367,14 +367,17 @@ public class NetworkThread extends BaseThread
 		Logger.i(this, "Searching for WiFi profile...");
 		List<WifiConfiguration> items = wifiManager.getConfiguredNetworks();
 		boolean isNew = false;
-		for (WifiConfiguration item : items)
+		if (items != null && items.size() > 0)
 		{
-			if (item == null)
-				continue;
-			if (compareSSIDs(item.SSID, WIFI_SSID))
+			for (WifiConfiguration item : items)
 			{
-				config = item;
-				break;
+				if (item == null)
+					continue;
+				if (compareSSIDs(item.SSID, WIFI_SSID))
+				{
+					config = item;
+					break;
+				}
 			}
 		}
 		if (config == null)
