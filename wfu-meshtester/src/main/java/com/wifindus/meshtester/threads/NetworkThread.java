@@ -102,6 +102,14 @@ public class NetworkThread extends BaseThread
 		//create/identify WFU network configuration
 		if (wifindus_public == null)
 			wifindus_public = getWifindusConfiguration();
+
+		//acquire wifi lock
+		if (wifiLock == null)
+		{
+			Logger.i(this, "Aquiring WiFi lock...");
+			wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, WIFI_LOCK_TAG);
+			wifiLock.acquire();
+		}
     }
 
     @Override
@@ -134,14 +142,6 @@ public class NetworkThread extends BaseThread
 							return;
 					}
 				}
-			}
-
-			//acquire wifi lock
-			if (wifiLock == null)
-			{
-				Logger.i(this, "Aquiring WiFi lock...");
-				wifiLock = wifiManager.createWifiLock(WIFI_LOCK_TAG);
-				wifiLock.acquire();
 			}
 
 			if (isCancelled())
@@ -369,6 +369,8 @@ public class NetworkThread extends BaseThread
 		boolean isNew = false;
 		for (WifiConfiguration item : items)
 		{
+			if (item == null)
+				continue;
 			if (compareSSIDs(item.SSID, WIFI_SSID))
 			{
 				config = item;
