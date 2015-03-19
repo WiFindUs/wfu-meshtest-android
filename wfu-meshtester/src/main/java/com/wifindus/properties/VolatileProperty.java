@@ -41,20 +41,22 @@ public class VolatileProperty<T> implements VolatilePropertyProxy
 
 	public final void setValue(T v)
 	{
-		if (equalityCheck(v))
+		if (v == null && value == null) //both null
 			return;
-		value = v;
-		lastTimeout = -1; //flags as dirty
+
+		if (v == value) //the same instance
+			return;
+
+		if (  ((v == null && value != null) || (v != null && value == null)) //one is null
+			|| !equalityCheck(v)) //neither are null, but not equal
+		{
+			value = v;
+			lastTimeout = -1; //flags as dirty
+		}
 	}
 
 	protected boolean equalityCheck(T v)
 	{
-		if (v == null && value == null) //both null
-			return true;
-
-		if (v == value) //the same instance
-			return true;
-
 		return v.equals(value);
 	}
 

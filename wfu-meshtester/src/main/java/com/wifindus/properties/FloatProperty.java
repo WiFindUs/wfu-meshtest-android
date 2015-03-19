@@ -21,9 +21,6 @@ public class FloatProperty extends NumericProperty<Float>
 		if (super.equalityCheck(v))
 			return true;
 
-		if ((v == null && value != null) || (v != null && value == null)) //one is null
-			return false;
-
 		if (Float.isNaN(value) && Float.isNaN(v))
 			return true;
 
