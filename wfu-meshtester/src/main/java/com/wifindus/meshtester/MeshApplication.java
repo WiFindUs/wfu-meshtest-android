@@ -104,16 +104,18 @@ public class MeshApplication extends Application implements LogSender
 			systemManager = new SystemManager(this);
 		if (preferences == null)
 			preferences = getSharedPreferences("com.wifindus.eye.sharedprefs", Context.MODE_PRIVATE);
-		SharedPreferences.Editor editor = preferences.edit();
 
 		//persistent files
-		File sdCard = Environment.getExternalStorageDirectory();
-		persistentDirectory = new File(sdCard.getAbsolutePath() + "/meshtester");
+		persistentDirectory = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/meshtester");
+
 		if (Static.isExternalStorageWritable())
-			persistentDirectory.mkdirs();
+		{
+			try { persistentDirectory.mkdirs(); }
+			catch (Exception e) { }
+		}
 
 		//device id
-		id = new DeviceID(this, new File(persistentDirectory, ".id"),preferences, editor);
+		id = new DeviceID(preferences, "meshtester");
 
 		//device type
 		properties.addProperty("dt", new VolatileProperty<String>(
@@ -140,6 +142,7 @@ public class MeshApplication extends Application implements LogSender
 			"sdk", new VolatileProperty<Integer>(android.os.Build.VERSION.SDK_INT, "%d", 60000));
 
 		//currently signed in user
+		SharedPreferences.Editor editor = preferences.edit();
 		int userID = 0;
 		try
 		{

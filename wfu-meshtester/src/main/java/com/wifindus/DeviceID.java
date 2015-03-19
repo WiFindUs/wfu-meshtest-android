@@ -1,13 +1,12 @@
 package com.wifindus;
 
 import android.content.SharedPreferences;
-
-import com.wifindus.logs.LogSender;
-import com.wifindus.logs.Logger;
-
+import android.util.Log;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -18,92 +17,101 @@ public class DeviceID
 {
 	private int id = -1;
 	private String idHex = "";
+	private static final String TAG = "DeviceID";
 
-	public DeviceID(LogSender logContext, File idFile, SharedPreferences prefs, SharedPreferences.Editor prefsEditor)
+	public DeviceID(SharedPreferences prefs, String subdir)
 	{
+		//deal with storage locations first
+		String storages[] = Static.getStorageDirectories();
+		List<File> validFiles = new ArrayList<File>();
+		for (String storage : storages)
+		{
+			File f = new File(storage + "/" + subdir);
+			Log.i(TAG,"Checking paths in " + f.getAbsolutePath());
+			if ((f.exists() && !f.isDirectory()) || (!f.exists() && !f.mkdirs()))
+				Log.e(TAG,"Invalid paths in " + f.getAbsolutePath() + "!");
+			else
+				validFiles.add(new File(f, ".id"));
+		}
+
 		//reading
-		id = readFromPrefs(logContext, prefs);
+		Log.i(TAG,"Reading ID from preferences...");
+		id = readFromPrefs(prefs);
+		for (int i = 0; i < validFiles.size() && id <= 0; i++)
+		{
+			File f = validFiles.get(i);
+			Log.i(TAG,"Reading ID from "+f.getAbsolutePath()+"...");
+			id = readFromStorage(f);
+		}
 		if (id <= 0)
-			id = readFromStorage(logContext, idFile);
-		if (id <= 0)
-			id = generateRandom(logContext);
+		{
+			Log.i(TAG, "Generating random ID.");
+			id = generateRandom();
+		}
 
 		//writing
-		writeToPrefs(logContext, prefsEditor);
-		writeToStorage(logContext, idFile);
+		Log.i(TAG,"Writing ID to preferences...");
+		writeToPrefs(prefs);
+		for (int i = 0; i < validFiles.size(); i++)
+		{
+			File f = validFiles.get(i);
+			Log.i(TAG,"Writing ID to "+f.getAbsolutePath()+"...");
+			writeToStorage(validFiles.get(i));
+		}
 
 		//hex
 		idHex = Integer.toHexString(id).toUpperCase();
+		Log.i(TAG,"Final ID: " + idHex);
 	}
 
-	private int readFromPrefs(LogSender logContext, SharedPreferences prefs)
+	private int readFromPrefs(SharedPreferences prefs)
 	{
 		if (prefs == null)
 			return -1;
 
 		int id = -1;
-		Logger.i(logContext, "Reading device ID from prefs...");
 		try
 		{
 			id = prefs.getInt("id",-1);
 		}
-		catch(ClassCastException e){ }
-		if (id <= 0)
-			Logger.w(logContext,"Could not read device ID from prefs.");
+		catch(ClassCastException e)
+		{
+			Log.e(TAG,"ClassCastException thrown reading ID from preferences!");
+		}
 		return id;
 	}
 
-	private int readFromStorage(LogSender logContext, File idFile)
+	private int readFromStorage(File idFile)
 	{
-		if (idFile == null)
+		if (idFile == null || !idFile.exists())
 			return -1;
-		Logger.i(logContext, "Reading device ID from storage...");
-		if (!Static.isExternalStorageReadable())
-		{
-			Logger.e(logContext, "Storage was not available for reading!");
-			return -1;
-		}
-		if (!idFile.exists())
-		{
-			Logger.w(logContext, "Could not find device ID file in storage.");
-			return -1;
-		}
 
 		int id = -1;
 		try
 		{
 			Scanner scanner = new Scanner(idFile);
 			while (id <= 0 && scanner.hasNextInt(16))
-			{
 				id = scanner.nextInt(16);
-				break;
-			}
 		}
-		catch (Exception e) { }
-		if (id <= 0)
-			Logger.w(logContext,"Could not read device ID from storage.");
+		catch (Exception e)
+		{
+			Log.e(TAG,e.getClass().getSimpleName() + " thrown reading ID from "+idFile.getAbsolutePath()+"!");
+		}
 		return id;
 	}
 
-	private int generateRandom(LogSender logContext)
+	private int generateRandom()
 	{
-		Logger.w(logContext,"Generating new random device ID...");
 		return 1 + (int) (2147483646 * new Random().nextDouble());
 	}
 
-	private void writeToStorage(LogSender logContext, File idFile)
+	private void writeToStorage(File idFile)
 	{
 		if (idFile == null)
 			return;
 		if (id <= 0)
 			throw new IllegalStateException("The device ID has not been initialized yet.");
-		if (!Static.isExternalStorageWritable())
-		{
-			Logger.e(logContext, "Storage was not available for writing!");
-			return;
-		}
 
-		Logger.i(logContext,"Writing device ID to storage...");
 		try
 		{
 			FileOutputStream fOut = new FileOutputStream(idFile);
@@ -111,28 +119,30 @@ public class DeviceID
 			osw.write(Integer.toHexString(id) + "\n");
 			osw.flush();
 			osw.close();
-			Logger.i(logContext,"Device ID written to storage OK");
 		}
 		catch (Exception e)
 		{
-			Logger.e(logContext, "Device ID could not be written to storage!");
+			Log.e(TAG,e.getClass().getSimpleName() + " thrown writing ID to "+idFile.getAbsolutePath()+"!");
 		}
 	}
 
-	private void writeToPrefs(LogSender logContext, SharedPreferences.Editor prefsEditor)
+	private void writeToPrefs(SharedPreferences prefs)
 	{
-		if (prefsEditor == null)
+		if (prefs == null)
 			return;
 		if (id <= 0)
 			throw new IllegalStateException("The device ID has not been initialized yet.");
+		SharedPreferences.Editor prefsEditor = prefs.edit();
+		if (prefsEditor == null)
+			return;
 		try
 		{
 			prefsEditor.putInt("id", id);
-			Logger.i(logContext,"Device ID written to prefs OK");
+			prefsEditor.apply();
 		}
 		catch (Exception e)
 		{
-			Logger.e(logContext, "Device ID could not be written to prefs!");
+			Log.e(TAG,e.getClass().getSimpleName() + " thrown writing ID to preferences!");
 		}
 	}
 
