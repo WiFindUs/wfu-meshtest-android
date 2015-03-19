@@ -78,7 +78,7 @@ public class StatusFragment extends BaseFragment
     @Override
     public void update()
     {
-		id.setText(Integer.toHexString(MeshApplication.getID()).toUpperCase());
+		id.setText(MeshApplication.getID().hex());
         connectionState.setText(MeshApplication.isMeshConnected() ? "Yes" : "No");
 
 		Double latitude = MeshApplication.getLatitude();

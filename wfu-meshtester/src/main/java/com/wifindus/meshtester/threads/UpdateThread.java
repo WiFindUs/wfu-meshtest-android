@@ -89,7 +89,7 @@ public class UpdateThread extends BaseThread
 
 
 		//generate message content
-		String message = "EYE{DEV|" + Integer.toHexString(MeshApplication.getID()).toUpperCase()
+		String message = "EYE{DEV|" + MeshApplication.getID().hex()
 			+ "|" + Long.toHexString(System.currentTimeMillis()).toUpperCase()
 			+ "{" + payload + "}}";
 

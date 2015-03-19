@@ -13,6 +13,7 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.wifindus.DeviceID;
 import com.wifindus.PingResult;
 import com.wifindus.Static;
 import com.wifindus.logs.LogSender;
@@ -62,7 +63,7 @@ public class MeshApplication extends Application implements LogSender
 		= new VolatilePropertyList();
 
 	//device info
-	private static volatile int id = -1;
+	private static volatile DeviceID id = null;
 	private static volatile long lastSignInTime = 0;
 	private static volatile ConcurrentHashMap<Integer, String> userNames
 		= new ConcurrentHashMap<Integer, String>();
@@ -112,80 +113,7 @@ public class MeshApplication extends Application implements LogSender
 			persistentDirectory.mkdirs();
 
 		//device id
-		File idFile = new File(persistentDirectory, ".id");
-		boolean writeIDPrefs = false, writeIDFile = false;
-
-		//check shared prefs first
-		Logger.i(this,"Reading device ID from preferences...");
-		try
-		{
-			id = preferences.getInt("id",-1);
-		}
-		catch(ClassCastException e){ }
-
-		//if this failed, check external storage
-		if (id < 0)
-		{
-			Logger.w(this,"Could not read ID from preferences, checking storage...");
-			writeIDPrefs = true;
-			if (Static.isExternalStorageReadable())
-			{
-				if (!idFile.exists())
-					Logger.e(this, "ID file did not exist in storage!");
-				else
-				{
-					try
-					{
-						Scanner scanner = new Scanner(idFile);
-						while (id < 0 && scanner.hasNextInt(16))
-							id = scanner.nextInt(16);
-					}
-					catch (Exception e)
-					{
-						if (id < 0)
-							Logger.e(this, "ID could not be read from storage!");
-					}
-				}
-			}
-			else
-				Logger.e(this,"Storage was not available for reading!");
-		}
-
-		//if is still -1, generate a new one
-		if (id < 0)
-		{
-			Logger.w(this,"ID could not be found. Generating...");
-			writeIDFile = true;
-			id = 1 + (int) (2147483646 * new Random().nextDouble());
-		}
-
-		Logger.i(this,"ID: %s OK", Integer.toHexString(id));
-
-		//write if necessary
-		if (writeIDPrefs)
-			editor.putInt("id", id);
-		if (writeIDFile)
-		{
-			Logger.i(this,"Writing ID to storage...");
-			if (Static.isExternalStorageWritable())
-			{
-				try
-				{
-					FileOutputStream fOut = new FileOutputStream(idFile);
-					OutputStreamWriter osw = new OutputStreamWriter(fOut);
-					osw.write(Integer.toHexString(id) + "\n");
-					osw.flush();
-					osw.close();
-					Logger.i(this,"ID written to storage OK");
-				}
-				catch (Exception e)
-				{
-					Logger.e(this, "ID could not be written to storage!");
-				}
-			}
-			else
-				Logger.e(this,"Storage was not available for writing!");
-		}
+		id = new DeviceID(this, new File(persistentDirectory, ".id"),preferences, editor);
 
 		//device type
 		properties.addProperty("dt", new VolatileProperty<String>(
@@ -291,7 +219,7 @@ public class MeshApplication extends Application implements LogSender
 
 	public static final SystemManager systems() { return systemManager; }
 
-	public static final int getID()
+	public static final DeviceID getID()
 	{
 		return id;
 	}
