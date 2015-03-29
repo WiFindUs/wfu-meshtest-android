@@ -26,7 +26,7 @@ public class StatusFragment extends BaseFragment
 {
     private TextView connectionState, connectedSince,
 		 id, uptime, location, battery, server,
-            locationTime;
+            locationTime, node;
 	private CheckBox forceMeshNetwork;
     private Handler timerHandler = new Handler();
     private static final String TAG = StatusFragment.class.getName();
@@ -52,6 +52,7 @@ public class StatusFragment extends BaseFragment
 		server.setText(getResources().getString(R.string.data_host_port,MeshApplication.getServerHostName(),MeshApplication.getServerPort()));
 		server.setClickable(true);
 		server.setOnClickListener(changeServerClickListener);
+		node = (TextView)view.findViewById(R.id.field_mesh_node);
 
 		forceMeshNetwork = (CheckBox)view.findViewById(R.id.network_change_force_mesh);
 		forceMeshNetwork.setChecked(MeshApplication.getForceMeshConnection());
@@ -80,7 +81,8 @@ public class StatusFragment extends BaseFragment
     {
 		id.setText(MeshApplication.getID().hex());
         connectionState.setText(MeshApplication.isMeshConnected() ? "Yes" : "No");
-
+		int nodeNum  = MeshApplication.getMeshNode();
+		node.setText(nodeNum == 0 ? "N/A" : Integer.toString(nodeNum));
 		Double latitude = MeshApplication.getLatitude();
 		Double longitude = MeshApplication.getLongitude();
         location.setText(latitude != null && longitude != null
@@ -185,7 +187,7 @@ public class StatusFragment extends BaseFragment
 						}
 
 						//update app
-						if (MeshApplication.setServer(StatusFragment.this.getActivity(), hostname, port))
+						if (MeshApplication.setServer(StatusFragment.this, hostname, port))
 						{
 							server.setText(getResources().getString(R.string.data_host_port, MeshApplication.getServerHostName(), MeshApplication.getServerPort()));
 							Toast.makeText(StatusFragment.this.getActivity(),

@@ -53,9 +53,9 @@ public class PingFragment extends BaseFragment
                 return;
 
             if (MeshApplication.isPingThreadRunning())
-                MeshApplication.stopPingThread(PingFragment.this.getActivity());
+                MeshApplication.stopPingThread(PingFragment.this);
             else
-                MeshApplication.startPingThread(PingFragment.this.getActivity(), rangeText.getText().toString().trim());
+                MeshApplication.startPingThread(PingFragment.this, rangeText.getText().toString().trim());
         }
     };
 

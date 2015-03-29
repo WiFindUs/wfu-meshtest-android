@@ -80,7 +80,7 @@ public class UserFragment extends BaseFragment  {
                 builder.setMessage(R.string.user_really_logout)
                     .setPositiveButton(android.R.string.yes,  new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface di, int i) {
-                            MeshApplication.updateUser(UserFragment.this.getActivity(),-1);
+                            MeshApplication.updateUser(UserFragment.this,-1);
                             update();
                             Toast.makeText(UserFragment.this.getActivity(),
                                 getResources().getString(R.string.user_logout_ok_toast),
@@ -112,7 +112,7 @@ public class UserFragment extends BaseFragment  {
                                 userID = Integer.parseInt(text.getText().toString().trim(), 16);
                             } catch (NumberFormatException ex) {
                             }
-                            MeshApplication.updateUser(UserFragment.this.getActivity(), userID);
+                            MeshApplication.updateUser(UserFragment.this, userID);
                             update();
                             if (userID > 0)
                                 Toast.makeText(UserFragment.this.getActivity(),

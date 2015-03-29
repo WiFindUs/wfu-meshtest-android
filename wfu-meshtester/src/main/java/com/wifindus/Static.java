@@ -11,6 +11,8 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 
+import org.apache.http.conn.util.InetAddressUtils;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -20,9 +22,12 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -35,7 +40,7 @@ public abstract class Static
 {
 	public static final double EARTH_RADIUS_MEAN = 6378.1370f;
 	public static final double DEGREES_TO_RADIANS = 0.0174532925;
-	private static final Pattern DIR_SEPARATOR = Pattern.compile("/");
+	public static final Pattern PATTERN_PATH_SEPARATOR = Pattern.compile(File.separator);
 	public static final Pattern PATTERN_HOSTNAME_PORT = Pattern.compile("\\s*"
 		//hostname/ip
 		+"("
@@ -50,8 +55,15 @@ public abstract class Static
 		+")"
 		//port (optional)
 		+ "([:][0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])?"
-		+"\\s*", Pattern.CASE_INSENSITIVE);
-
+		+"\\s*", Pattern.CASE_INSENSITIVE
+	);
+	public static final Pattern PATTERN_IPV4_ADDRESS = Pattern.compile("\\s*" +
+		"(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)[.]" +
+		"(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)[.]" +
+		"(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)[.]" +
+		"(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
+		+"\\s*", Pattern.CASE_INSENSITIVE
+	);
     /**
      * Detect if the system's Airplane mode is turned on.
      * @param context application context to use
@@ -215,7 +227,7 @@ public abstract class Static
 			else
 			{
 				final String path = Environment.getExternalStorageDirectory().getAbsolutePath();
-				final String[] folders = DIR_SEPARATOR.split(path);
+				final String[] folders = PATTERN_PATH_SEPARATOR.split(path);
 				final String lastFolder = folders[folders.length - 1];
 				boolean isDigit = false;
 				try
@@ -246,5 +258,41 @@ public abstract class Static
 			Collections.addAll(rv, rawSecondaryStorages);
 		}
 		return rv.toArray(new String[rv.size()]);
+	}
+
+	//credit: http://stackoverflow.com/a/13007325
+	public static String getIPAddress(boolean useIPv4)
+	{
+		try
+		{
+			List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+			for (NetworkInterface intf : interfaces)
+			{
+				List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
+				for (InetAddress addr : addrs)
+				{
+					if (!addr.isLoopbackAddress())
+					{
+						String sAddr = addr.getHostAddress().toUpperCase();
+						boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
+						if (useIPv4)
+						{
+							if (isIPv4)
+								return sAddr;
+						}
+						else
+						{
+							if (!isIPv4)
+							{
+								int delim = sAddr.indexOf('%'); // drop ip6 port suffix
+								return delim < 0 ? sAddr : sAddr.substring(0, delim);
+							}
+						}
+					}
+				}
+			}
+		}
+		catch (Exception ex) { } // eat exceptions
+		return "";
 	}
 }

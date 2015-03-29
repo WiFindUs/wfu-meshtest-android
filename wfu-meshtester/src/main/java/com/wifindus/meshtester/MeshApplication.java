@@ -51,6 +51,7 @@ public class MeshApplication extends Application implements LogSender
 	public static final String ACTION_UPDATE_PINGS = MeshApplication.ACTION_PREFIX + "UPDATE_PINGS";
 	public static final String ACTION_UPDATE_BATTERY = MeshApplication.ACTION_PREFIX + "UPDATE_BATTERY";
 	public static final String ACTION_UPDATE_SERVER = MeshApplication.ACTION_PREFIX + "UPDATE_SERVER";
+	public static final String ACTION_UPDATE_NODE = MeshApplication.ACTION_PREFIX + "UPDATE_NODE";
 
 	private static final String TAG = MeshApplication.class.getName();
 	private static volatile MeshService meshService = null;
@@ -189,8 +190,9 @@ public class MeshApplication extends Application implements LogSender
 		if (serverPort < 0)
 			editor.putInt("serverPort", serverPort = 33339);
 
-		//force mesh usage
+		//mesh state
 		forceMeshConnection = preferences.getBoolean("forceMeshConnection", true);
+		properties.addProperty("node", new VolatileProperty<Integer>(0, "%d", 10000));
 
 		editor.apply();
 	}
@@ -286,7 +288,7 @@ public class MeshApplication extends Application implements LogSender
 			(Double)getVolatileProperty("long")));
 	}
 
-	public static final boolean setServer(Context context, String hostname, int port)
+	public static final boolean setServer(LogSender context, String hostname, int port)
 	{
 		boolean changeHost = hostname != null && hostname.length() != 0
 			&& hostname.compareTo(serverHostName) != 0;
@@ -316,7 +318,7 @@ public class MeshApplication extends Application implements LogSender
 			editor.putInt("serverPort", serverPort = port);
 
 		editor.apply();
-		Static.broadcastSimpleIntent(context, ACTION_UPDATE_SERVER);
+		Static.broadcastSimpleIntent(context.logContext(), ACTION_UPDATE_SERVER);
 		return true;
 	}
 
@@ -414,6 +416,19 @@ public class MeshApplication extends Application implements LogSender
 		return meshConnectedSince;
 	}
 
+	public static final Integer getMeshNode()
+	{
+		return getVolatileProperty("node");
+	}
+
+	public static final void updateMeshNode(LogSender context, int nodeNumber)
+	{
+		if ((Integer)getVolatileProperty("node") == nodeNumber)
+			return;
+		setVolatileProperty("node", nodeNumber);
+		Static.broadcastSimpleIntent(context.logContext(), ACTION_UPDATE_NODE);
+	}
+
 	public static final long getUserSignedInSince()
 	{
 		return lastSignInTime;
@@ -502,7 +517,7 @@ public class MeshApplication extends Application implements LogSender
         Static.broadcastSimpleIntent(context.logContext(), ACTION_UPDATE_LOCATION);
     }
 
-    public static final void updateUser(Context context, int userID)
+    public static final void updateUser(LogSender context, int userID)
     {
 		if ((userID = Math.max(userID,0)) == getUserID())
             return;
@@ -514,19 +529,19 @@ public class MeshApplication extends Application implements LogSender
         editor.putLong("lastSignInTime", lastSignInTime);
         editor.apply();
 
-        Static.broadcastSimpleIntent(context, ACTION_UPDATE_USER);
+        Static.broadcastSimpleIntent(context.logContext(), ACTION_UPDATE_USER);
     }
 
-    public static final void updateMeshConnected(Context context, boolean connected)
+    public static final void updateMeshConnected(LogSender context, boolean connected)
     {
         if (connected == meshConnected)
             return;
         meshConnected = connected;
         meshConnectedSince = connected ? SystemClock.elapsedRealtime() : 0;
-        Static.broadcastSimpleIntent(context, ACTION_UPDATE_CONNECTION_STATE);
+        Static.broadcastSimpleIntent(context.logContext(), ACTION_UPDATE_CONNECTION_STATE);
     }
 
-	public static void updateBatteryStats(Context context, float percentage, boolean charging)
+	public static void updateBatteryStats(LogSender context, float percentage, boolean charging)
 	{
 		if ((int)(percentage * 100.0f) == (int)(getBatteryPercentage() * 100.0f)
 			&& isBatteryCharging() == charging)
@@ -535,16 +550,16 @@ public class MeshApplication extends Application implements LogSender
 		setVolatileProperty("batt", percentage );
 		setVolatileProperty("chg", charging ? 1 : 0);
 
-		Static.broadcastSimpleIntent(context, ACTION_UPDATE_BATTERY);
+		Static.broadcastSimpleIntent(context.logContext(), ACTION_UPDATE_BATTERY);
 	}
 
-    public static void updateNodePing(Context context, int node, PingResult newResult)
+    public static void updateNodePing(LogSender context, int node, PingResult newResult)
     {
         PingResult currentResult = nodePings.get(Integer.valueOf(node));
         if (currentResult == null && newResult == null)
             return;
         nodePings.put(Integer.valueOf(node), newResult);
-        Static.broadcastSimpleIntent(context, ACTION_UPDATE_PINGS);
+        Static.broadcastSimpleIntent(context.logContext(), ACTION_UPDATE_PINGS);
     }
 
     public static boolean isPingThreadRunning()
@@ -552,11 +567,11 @@ public class MeshApplication extends Application implements LogSender
         return pingThread != null;
     }
 
-    public static void startPingThread(Context context, String nodeRange)
+    public static void startPingThread(LogSender context, String nodeRange)
     {
         if (isPingThreadRunning())
             return;
-        pingThread = new PingThread(context,nodeRange);
+        pingThread = new PingThread(context.logContext(),nodeRange);
         if (pingThread.getNodeCount() == 0)
             pingThread = null;
         else
@@ -566,18 +581,18 @@ public class MeshApplication extends Application implements LogSender
                 nodePings.put(Integer.valueOf(pingThread.getNodeNumber(i)), PingResult.WAITING);
             pingThread.start();
             if (context != null)
-                Static.broadcastSimpleIntent(context, MeshApplication.ACTION_UPDATE_PINGS);
+                Static.broadcastSimpleIntent(context.logContext(), MeshApplication.ACTION_UPDATE_PINGS);
         }
     }
 
-    public static void stopPingThread(Context context)
+    public static void stopPingThread(LogSender context)
     {
         if (!isPingThreadRunning())
             return;
         pingThread.cancelThread();
         pingThread = null;
         if (context != null)
-            Static.broadcastSimpleIntent(context, MeshApplication.ACTION_UPDATE_PINGS);
+            Static.broadcastSimpleIntent(context.logContext(), MeshApplication.ACTION_UPDATE_PINGS);
     }
 
 	public static String updatePacketPayload()

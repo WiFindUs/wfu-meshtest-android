@@ -82,6 +82,7 @@ public class MainActivity extends FragmentActivity
         intentFilter.addAction(MeshApplication.ACTION_UPDATE_USER);
         intentFilter.addAction(MeshApplication.ACTION_UPDATE_PINGS);
 		intentFilter.addAction(MeshApplication.ACTION_UPDATE_BATTERY);
+		intentFilter.addAction(MeshApplication.ACTION_UPDATE_NODE);
         registerReceiver(meshActivityReceiver, intentFilter);
 
         //create the background service
@@ -200,7 +201,8 @@ public class MainActivity extends FragmentActivity
             }
             else if (arg1.getAction().equals(MeshApplication.ACTION_UPDATE_CONNECTION_STATE)
              || arg1.getAction().equals(MeshApplication.ACTION_UPDATE_LOCATION)
-			 || arg1.getAction().equals(MeshApplication.ACTION_UPDATE_BATTERY))
+			 || arg1.getAction().equals(MeshApplication.ACTION_UPDATE_BATTERY)
+			 || arg1.getAction().equals(MeshApplication.ACTION_UPDATE_NODE))
             {
                 if (statusFragment != null && statusFragment.isVisible())
                     statusFragment.update();

@@ -90,7 +90,7 @@ public class PingThread extends BaseThread
             try
             {
                 result = Static.ping(addr, 10);
-                MeshApplication.updateNodePing(logContext(),
+                MeshApplication.updateNodePing(this,
                     nodes.get(i).intValue(),
                     new PingResult(result));
             }
