@@ -8,9 +8,7 @@ import android.location.Location;
 import android.os.Environment;
 import android.os.StrictMode;
 import android.os.SystemClock;
-import android.provider.Settings;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.wifindus.DeviceID;
@@ -27,14 +25,9 @@ import com.wifindus.properties.VolatilePropertyList;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Random;
-import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -44,13 +37,17 @@ public class MeshApplication extends Application implements LogSender
 {
 	public static final long SIGNOUT_INVALID_TIME = 1000 * 60 * 60 * 8; //eight hours
 
+	public static final int SERVER_PRIMARY = 0;
+	public static final int SERVER_SECONDARY = 1;
+	public static final int SERVER_WEB = 2;
+	public static final int SERVER_COUNT = 3;
+
 	public static final String ACTION_PREFIX = "WFU_";
 	public static final String ACTION_UPDATE_LOCATION = MeshApplication.ACTION_PREFIX + "UPDATE_LOCATION";
 	public static final String ACTION_UPDATE_CONNECTION_STATE = MeshApplication.ACTION_PREFIX + "UPDATE_CONNECTION_STATE";
 	public static final String ACTION_UPDATE_USER = MeshApplication.ACTION_PREFIX + "UPDATE_USER";
 	public static final String ACTION_UPDATE_PINGS = MeshApplication.ACTION_PREFIX + "UPDATE_PINGS";
 	public static final String ACTION_UPDATE_BATTERY = MeshApplication.ACTION_PREFIX + "UPDATE_BATTERY";
-	public static final String ACTION_UPDATE_SERVER = MeshApplication.ACTION_PREFIX + "UPDATE_SERVER";
 	public static final String ACTION_UPDATE_NODE = MeshApplication.ACTION_PREFIX + "UPDATE_NODE";
 
 	private static final String TAG = MeshApplication.class.getName();
@@ -76,9 +73,7 @@ public class MeshApplication extends Application implements LogSender
 	private static volatile long meshConnectedSince = 0;
 
 	//network/server
-	private static volatile String serverHostName = "";
-	private static volatile int serverPort = -1;
-	private static volatile InetAddress serverAddress = null;
+	private static volatile MeshServer[] servers = new MeshServer[SERVER_COUNT];
 	private static volatile boolean forceMeshConnection = true;
 	private static volatile ArrayList<SignalStrengthReportItem> signalStrengthHistory
 		= new ArrayList<SignalStrengthReportItem>();
@@ -142,6 +137,11 @@ public class MeshApplication extends Application implements LogSender
 		properties.addProperty(
 			"sdk", new VolatileProperty<Integer>(android.os.Build.VERSION.SDK_INT, "%d", 60000));
 
+		//servers
+		servers[SERVER_PRIMARY] = new MeshServer("192.168.1.1",false, preferences, "primaryServer");
+		servers[SERVER_SECONDARY] = new MeshServer("192.168.1.2",false, preferences, "secondaryServer");
+		servers[SERVER_WEB] = new MeshServer("118.88.26.88",true, preferences, "webServer"); //wifindus.com
+
 		//currently signed in user
 		SharedPreferences.Editor editor = preferences.edit();
 		int userID = 0;
@@ -170,25 +170,6 @@ public class MeshApplication extends Application implements LogSender
 		properties.addProperty("acc", new FloatProperty(null, "%.2f", 10000, 0.1f));
 		properties.addProperty("alt", new DoubleProperty(null, "%.2f", 10000, 1.0));
 		properties.addToBlacklist("fix","lat","long","acc","alt");
-
-		//server IP address and port
-		serverHostName = preferences.getString("serverHostName", "");
-		if (serverHostName.length() == 0)
-			editor.putString("serverHostName", serverHostName = "192.168.1.1");
-		try
-		{
-			serverAddress = InetAddress.getByName(serverHostName);
-		} catch (UnknownHostException e)
-		{
-			editor.putString("serverHostName", serverHostName = "192.168.1.1");
-			try
-			{
-				serverAddress = InetAddress.getByName(serverHostName);
-			} catch (UnknownHostException ex) { } //shouldn't fail
-		}
-		serverPort = preferences.getInt("serverPort", -1);
-		if (serverPort < 0)
-			editor.putInt("serverPort", serverPort = 33339);
 
 		//mesh state
 		forceMeshConnection = preferences.getBoolean("forceMeshConnection", true);
@@ -251,11 +232,6 @@ public class MeshApplication extends Application implements LogSender
 		editor.apply();
 	}
 
-	public static final int getServerPort()
-	{
-		return serverPort;
-	}
-
 	public static final String getVersion()
 	{
 		return getVolatileProperty("ver");
@@ -271,14 +247,11 @@ public class MeshApplication extends Application implements LogSender
 		properties.<T>getProperty(key).setValue(value);
 	}
 
-	public static final String getServerHostName()
+	public static final MeshServer getServer(int serverIndex)
 	{
-		return serverHostName;
-	}
-
-	public static final InetAddress getServerAddress()
-	{
-		return serverAddress;
+		if (serverIndex < 0 || serverIndex >= servers.length)
+			return null;
+		return servers[serverIndex];
 	}
 
 	public static final void addSignalStrengthHistory(SignalStrengthData data)
@@ -286,40 +259,6 @@ public class MeshApplication extends Application implements LogSender
 		signalStrengthHistory.add(new SignalStrengthReportItem(data,
 			(Double)getVolatileProperty("lat"),
 			(Double)getVolatileProperty("long")));
-	}
-
-	public static final boolean setServer(LogSender context, String hostname, int port)
-	{
-		boolean changeHost = hostname != null && hostname.length() != 0
-			&& hostname.compareTo(serverHostName) != 0;
-		boolean changePort = port >= 1024 && port <= 65535 && port != serverPort;
-
-		if (!changeHost && !changePort)
-			return false;
-
-		SharedPreferences.Editor editor = preferences.edit();
-
-		if (changeHost)
-		{
-			InetAddress newAddress;
-			try
-			{
-				newAddress = InetAddress.getByName(hostname);
-			} catch (UnknownHostException ex)
-			{
-				return false;
-			}
-
-			editor.putString("serverHostName", serverHostName = hostname);
-			serverAddress = newAddress;
-		}
-
-		if (changePort)
-			editor.putInt("serverPort", serverPort = port);
-
-		editor.apply();
-		Static.broadcastSimpleIntent(context.logContext(), ACTION_UPDATE_SERVER);
-		return true;
 	}
 
 	public static final void exportSignalStrengthLog(LogSender context)
@@ -598,6 +537,11 @@ public class MeshApplication extends Application implements LogSender
 	public static String updatePacketPayload()
 	{
 		return properties.flushList(false,true,true);
+	}
+
+	public static String webPacketPayload()
+	{
+		return properties.flushList(true,true,false);
 	}
 }
 

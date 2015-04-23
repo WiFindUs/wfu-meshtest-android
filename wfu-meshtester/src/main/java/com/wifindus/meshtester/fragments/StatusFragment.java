@@ -16,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.wifindus.meshtester.MeshApplication;
+import com.wifindus.meshtester.MeshServer;
 import com.wifindus.meshtester.R;
 import com.wifindus.Static;
 
@@ -25,9 +26,10 @@ import java.util.regex.Matcher;
 public class StatusFragment extends BaseFragment
 {
     private TextView connectionState, connectedSince,
-		 id, uptime, location, battery, server,
+		 id, uptime, location, battery, serverPrimary, serverSecondary,
             locationTime, node;
-	private CheckBox forceMeshNetwork;
+	private CheckBox forceMeshNetwork, serverPrimaryEnabled, serverSecondaryEnabled,
+		webServerEnabled;
     private Handler timerHandler = new Handler();
     private static final String TAG = StatusFragment.class.getName();
 
@@ -48,11 +50,35 @@ public class StatusFragment extends BaseFragment
         location = (TextView)view.findViewById(R.id.field_location);
 		battery = (TextView)view.findViewById(R.id.field_battery);
         locationTime = (TextView)view.findViewById(R.id.field_device_last_location);
-		server = (TextView)view.findViewById(R.id.field_mesh_server);
-		server.setText(getResources().getString(R.string.data_host_port,MeshApplication.getServerHostName(),MeshApplication.getServerPort()));
-		server.setClickable(true);
-		server.setOnClickListener(changeServerClickListener);
 		node = (TextView)view.findViewById(R.id.field_mesh_node);
+
+		MeshServer primary = MeshApplication.getServer(MeshApplication.SERVER_PRIMARY);
+		serverPrimary = (TextView)view.findViewById(R.id.field_server_primary);
+		serverPrimary.setText(primary.getHostName());
+		serverPrimary.setClickable(true);
+		serverPrimary.setOnClickListener(changeServerClickListener);
+		serverPrimary.setTag(primary);
+		serverPrimaryEnabled = (CheckBox)view.findViewById(R.id.network_server_primary_enabled);
+		serverPrimaryEnabled.setTag(primary);
+		serverPrimaryEnabled.setChecked(primary.isEnabled());
+		serverPrimaryEnabled.setOnClickListener(serverEnabledClickListener);
+
+		MeshServer secondary = MeshApplication.getServer(MeshApplication.SERVER_SECONDARY);
+		serverSecondary = (TextView)view.findViewById(R.id.field_server_secondary);
+		serverSecondary.setText(secondary.getHostName());
+		serverSecondary.setClickable(true);
+		serverSecondary.setOnClickListener(changeServerClickListener);
+		serverSecondary.setTag(secondary);
+		serverSecondaryEnabled = (CheckBox)view.findViewById(R.id.network_server_secondary_enabled);
+		serverSecondaryEnabled.setTag(secondary);
+		serverSecondaryEnabled.setChecked(secondary.isEnabled());
+		serverSecondaryEnabled.setOnClickListener(serverEnabledClickListener);
+
+		MeshServer web = MeshApplication.getServer(MeshApplication.SERVER_WEB);
+		webServerEnabled = (CheckBox)view.findViewById(R.id.network_server_web_enabled);
+		webServerEnabled.setTag(web);
+		webServerEnabled.setChecked(web.isEnabled());
+		webServerEnabled.setOnClickListener(serverEnabledClickListener);
 
 		forceMeshNetwork = (CheckBox)view.findViewById(R.id.network_change_force_mesh);
 		forceMeshNetwork.setChecked(MeshApplication.getForceMeshConnection());
@@ -126,9 +152,19 @@ public class StatusFragment extends BaseFragment
 		@Override
 		public void onClick(View view)
 		{
-			if (view != forceMeshNetwork)
-				return;
-			MeshApplication.setForceMeshConnection(forceMeshNetwork.isChecked());
+			CheckBox cb = (CheckBox)view;
+			MeshApplication.setForceMeshConnection(cb.isChecked());
+		}
+	};
+
+	private View.OnClickListener serverEnabledClickListener = new View.OnClickListener()
+	{
+		@Override
+		public void onClick(View view)
+		{
+			CheckBox cb = (CheckBox)view;
+			MeshServer server = (MeshServer)cb.getTag();
+			server.setEnabled(cb.isChecked());
 		}
 	};
 
@@ -136,14 +172,14 @@ public class StatusFragment extends BaseFragment
 		@Override
 		public void onClick(View view)
 		{
-			if (view != server)
-				return;
+			final MeshServer server = (MeshServer)view.getTag();
+			final TextView serverText = (TextView)view;
 
 			//create text edit box
 			final EditText text = new EditText(StatusFragment.this.getActivity());
 			text.setRawInputType(InputType.TYPE_CLASS_TEXT);
 			text.setFilters(new InputFilter[] {new InputFilter.LengthFilter(64)});
-			text.setText(getResources().getString(R.string.data_host_port,MeshApplication.getServerHostName(),MeshApplication.getServerPort()));
+			text.setText(server.getHostName());
 
 			//build the dialog
 			AlertDialog.Builder builder = new AlertDialog.Builder(StatusFragment.this.getActivity());
@@ -164,34 +200,18 @@ public class StatusFragment extends BaseFragment
 							return;
 						}
 
-						//get hostname
-						String hostname = match.group(1);
-
-						//get port
-						int port = -1;
-						if (match.groupCount() >= 3)
-						{
-							try
-							{
-								port = Integer.parseInt(match.group(2));
-							} catch (NumberFormatException ex) { }
-						}
-						if (port < 0)
-							port = 33339;
-						else if (port < 1024 || port > 65535)
-						{
-							Toast.makeText(StatusFragment.this.getActivity(),
-								getResources().getString(R.string.status_change_server_invalid_port),
-								Toast.LENGTH_LONG).show();
-							return;
-						}
-
 						//update app
-						if (MeshApplication.setServer(StatusFragment.this, hostname, port))
+						if (server.setHostName(match.group(1)))
 						{
-							server.setText(getResources().getString(R.string.data_host_port, MeshApplication.getServerHostName(), MeshApplication.getServerPort()));
+							serverText.setText(server.getHostName());
 							Toast.makeText(StatusFragment.this.getActivity(),
 								getResources().getString(R.string.status_change_server_ok),
+								Toast.LENGTH_LONG).show();
+						}
+						else
+						{
+							Toast.makeText(StatusFragment.this.getActivity(),
+								getResources().getString(R.string.status_change_server_error),
 								Toast.LENGTH_LONG).show();
 						}
 					}

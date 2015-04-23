@@ -17,16 +17,16 @@ public class SignalStrengthAnalyzer
 	public SignalStrengthAnalyzer(int iterationCount)
 	{
 		if (iterationCount <= 0)
-			throw new IllegalArgumentException("Argument 'iterationCount' must be greater than zero.'");
+			throw new IllegalArgumentException("Argument 'iterationCount' must be greater than zero.");
 		this.iterationCount = iterationCount;
 	}
 
 	public SignalStrengthAnalyzer addSample(String bssid, int iteration, int strength)
 	{
 		if (bssid == null || bssid.length() == 0)
-			throw new IllegalArgumentException("Argument 'bssid' cannot be null or blank.'");
+			throw new IllegalArgumentException("Argument 'bssid' cannot be null or blank.");
 		if (iteration < 0 || iteration >= iterationCount)
-			throw new IllegalArgumentException("Argument 'iteration' must be between 0 and "+iterationCount+" (iterationCount), inclusive.'");
+			throw new IllegalArgumentException("Argument 'iteration' must be between 0 and "+iterationCount+" (iterationCount), inclusive.");
 		if (analyzed)
 			throw new IllegalStateException("This instance of SignalStrengthAnalyzer has already been finalized by analyze().");
 

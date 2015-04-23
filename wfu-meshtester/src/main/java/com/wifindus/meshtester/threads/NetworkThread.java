@@ -16,11 +16,9 @@ import com.wifindus.meshtester.SignalStrengthAnalyzer;
 import com.wifindus.meshtester.SignalStrengthData;
 import com.wifindus.Static;
 
-import java.net.InetAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by marzer on 25/04/2014.

@@ -40,7 +40,7 @@
             android:text="@string/status_connected"
             android:textStyle="bold"
             android:layout_marginRight="10dp"
-            android:minWidth="140dp"
+            android:minWidth="120dp"
             android:gravity="right"
  />
 
@@ -65,7 +65,7 @@
             android:text="@string/status_since"
             android:textStyle="bold"
             android:layout_marginRight="10dp"
-            android:minWidth="140dp"
+            android:minWidth="120dp"
             android:gravity="right" />
 
         <TextView
@@ -87,23 +87,90 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="@string/status_server"
+            android:text="@string/status_server_primary"
             android:textStyle="bold"
             android:layout_marginRight="10dp"
-            android:minWidth="140dp"
+            android:minWidth="120dp"
             android:gravity="right" />
+
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/network_server_primary_enabled"
+            android:checked="true"
+            android:layout_marginRight="10dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:id="@+id/field_mesh_server"
+                android:id="@+id/field_server_primary"
                 android:gravity="top"
                 android:textIsSelectable="false"
                 android:clickable="true"
                 android:textColor="@color/holo_blue_dark"
-                android:text="192.168.1.1:33339"
                 />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/status_server_secondary"
+            android:textStyle="bold"
+            android:layout_marginRight="10dp"
+            android:minWidth="120dp"
+            android:gravity="right" />
+
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/network_server_secondary_enabled"
+            android:checked="true"
+            android:layout_marginRight="10dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:id="@+id/field_server_secondary"
+            android:gravity="top"
+            android:textIsSelectable="false"
+            android:clickable="true"
+            android:textColor="@color/holo_blue_dark"
+            />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/status_server_web"
+            android:textStyle="bold"
+            android:layout_marginRight="10dp"
+            android:minWidth="120dp"
+            android:gravity="right" />
+
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/network_server_web_enabled"
+            android:checked="true"
+            android:layout_marginRight="10dp"/>
 
     </LinearLayout>
 
@@ -120,14 +187,13 @@
             android:text="@string/status_node"
             android:textStyle="bold"
             android:layout_marginRight="10dp"
-            android:minWidth="140dp"
+            android:minWidth="120dp"
             android:gravity="right" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="N/A"
             android:id="@+id/field_mesh_node"/>
 
     </LinearLayout>
@@ -145,7 +211,7 @@
             android:text="@string/status_force_mesh"
             android:textStyle="bold"
             android:layout_marginRight="10dp"
-            android:minWidth="140dp"
+            android:minWidth="120dp"
             android:gravity="right" />
 
         <CheckBox
@@ -180,7 +246,7 @@
             android:text="@string/status_device_id"
             android:textStyle="bold"
             android:layout_marginRight="10dp"
-            android:minWidth="140dp"
+            android:minWidth="120dp"
             android:gravity="right" />
 
         <TextView
@@ -188,7 +254,6 @@
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:id="@+id/field_hash"
-            android:text="abcdABCD"
             android:typeface="monospace" />
     </LinearLayout>
 
@@ -205,7 +270,7 @@
             android:text="@string/status_uptime"
             android:textStyle="bold"
             android:layout_marginRight="10dp"
-            android:minWidth="140dp"
+            android:minWidth="120dp"
             android:gravity="right" />
 
         <TextView
@@ -230,14 +295,13 @@
         android:text="@string/status_location"
         android:textStyle="bold"
         android:layout_marginRight="10dp"
-        android:minWidth="140dp"
+        android:minWidth="120dp"
         android:gravity="right" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="@string/data_latlong"
         android:id="@+id/field_location" />
 </LinearLayout>
 
@@ -254,7 +318,7 @@
             android:text="@string/status_last_location"
             android:textStyle="bold"
             android:layout_marginRight="10dp"
-            android:minWidth="140dp"
+            android:minWidth="120dp"
             android:gravity="right" />
 
         <TextView
@@ -278,14 +342,13 @@
             android:text="@string/status_battery"
             android:textStyle="bold"
             android:layout_marginRight="10dp"
-            android:minWidth="140dp"
+            android:minWidth="120dp"
             android:gravity="right" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="@string/data_battery"
             android:id="@+id/field_battery" />
     </LinearLayout>
 

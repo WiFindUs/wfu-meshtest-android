@@ -16,9 +16,9 @@ public class SignalStrengthData
 	public SignalStrengthData(String bssid, int iterationCount)
 	{
 		if (bssid == null || bssid.length() == 0)
-			throw new IllegalArgumentException("Argument 'bssid' cannot be null or blank.'");
+			throw new IllegalArgumentException("Argument 'bssid' cannot be null or blank.");
 		if (iterationCount <= 0)
-			throw new IllegalArgumentException("Argument 'iterationCount' must be greater than zero.'");
+			throw new IllegalArgumentException("Argument 'iterationCount' must be greater than zero.");
 
 		this.bssid = bssid;
 		this.iterationCount = iterationCount;
@@ -30,7 +30,7 @@ public class SignalStrengthData
 	public SignalStrengthData addSample(int iteration, int strength)
 	{
 		if (iteration < 0 || iteration >= iterationCount)
-			throw new IllegalArgumentException("Argument 'iteration' must be between 0 and "+iterationCount+" (iterationCount), inclusive.'");
+			throw new IllegalArgumentException("Argument 'iteration' must be between 0 and "+iterationCount+" (iterationCount), inclusive.");
 		if (analyzed)
 			throw new IllegalStateException("This instance of SignalStrengthData has already been finalized by analyze().");
 

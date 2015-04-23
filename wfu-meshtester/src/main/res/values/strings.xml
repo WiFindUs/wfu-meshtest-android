@@ -13,7 +13,6 @@
     <string name="data_latlong">%1$f°, %2$f°</string>
     <string name="data_node">%1$d (%2$s)</string>
     <string name="data_battery">%1$d%% %2$s</string>
-    <string name="data_host_port">%1$s:%2$d</string>
     <string name="signal_strengths_saved_ok">File \'%1$s\' written to SD card.</string>
     <string name="signal_strengths_saved_exception">%1$s thrown writing \'%2$s\' to SD card!</string>
     <string name="signal_strengths_none">No signal strengths have been recorded. Check your wifi settings.</string>
@@ -45,13 +44,15 @@
     <string name="status_location">Location:</string>
     <string name="status_last_cleaned">Update sent:</string>
     <string name="status_battery">Battery:</string>
-    <string name="status_server">Server:</string>
+    <string name="status_server_primary">Server 1:</string>
+    <string name="status_server_secondary">Server 2:</string>
+    <string name="status_server_web">Web fallback:</string>
     <string name="status_change_server">Change server</string>
-    <string name="status_change_server_help_text">Enter the hostname and port:</string>
-    <string name="status_change_server_invalid_format">The provided Hostname:Port pair was improperly formatted.</string>
-    <string name="status_change_server_invalid_port">The provided port was invalid; must be between 1024 and 65535.</string>
-    <string name="status_change_server_ok">The server address was changed successfully.</string>
-    <string name="status_force_mesh">Force mesh wifi:</string>
+    <string name="status_change_server_help_text">Enter server hostname:</string>
+    <string name="status_change_server_invalid_format">The provided hostname was improperly formatted.</string>
+    <string name="status_change_server_ok">The server hostname was changed successfully.</string>
+    <string name="status_change_server_error">There was an error changing the server hostname.</string>
+    <string name="status_force_mesh">Force wifi:</string>
     <string name="status_last_location">Located:</string>
 
 
