@@ -50,7 +50,7 @@ public class UpdateThread extends BaseThread
 	@Override
 	public long timeoutLength()
 	{
-		return 1000;
+		return MeshApplication.isMeshConnected() ? 500 : 5000;
 	}
 
     @Override

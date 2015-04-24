@@ -68,7 +68,7 @@ public class NetworkThread extends BaseThread
     @Override
 	public long timeoutLength()
 	{
-		long time = MeshApplication.isMeshConnected() ? 30000 : 10000;
+		/*long time = MeshApplication.isMeshConnected() ? 30000 : 10000;
 		if (!MeshApplication.isBatteryCharging())
 		{
 			float battery = MeshApplication.getBatteryPercentage();
@@ -78,6 +78,8 @@ public class NetworkThread extends BaseThread
 				time = (3*time)/2;
 		}
 		return time;
+		*/
+		return 10000;
 	}
 
     @Override
@@ -115,9 +117,9 @@ public class NetworkThread extends BaseThread
     @Override
     protected void iteration()
 	{
-		if (MeshApplication.getForceMeshConnection())
-			performForcedMeshIteration();
-		else
+		//if (MeshApplication.getForceMeshConnection())
+		//	performForcedMeshIteration();
+		//else
 			performUnforcedIteration();
 		safesleep(1000);
 		updateMeshNode(null);

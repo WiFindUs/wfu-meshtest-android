@@ -118,7 +118,7 @@ public class MeshApplication extends Application implements LogSender
 			systems().getTelephonyManager() == null
 				|| systems().getTelephonyManager().getPhoneType() == TelephonyManager.PHONE_TYPE_NONE ? "TAB" : "PHO",
 			"%s",
-			60000
+			120000
 		));
 
 		//device android version
@@ -131,16 +131,17 @@ public class MeshApplication extends Application implements LogSender
 		{
 			versionString = "NULL";
 		}
-		properties.addProperty("ver", new VolatileProperty<String>(versionString, "%s", 60000));
+		properties.addProperty("ver", new VolatileProperty<String>(versionString, "%s", 120000));
 
 		//device android sdk level
 		properties.addProperty(
-			"sdk", new VolatileProperty<Integer>(android.os.Build.VERSION.SDK_INT, "%d", 60000));
+			"sdk", new VolatileProperty<Integer>(android.os.Build.VERSION.SDK_INT, "%d", 120000));
 
 		//servers
 		servers[SERVER_PRIMARY] = new MeshServer("192.168.1.1",false, preferences, "primaryServer");
 		servers[SERVER_SECONDARY] = new MeshServer("192.168.1.2",false, preferences, "secondaryServer");
 		servers[SERVER_WEB] = new MeshServer("118.88.26.88",true, preferences, "webServer"); //wifindus.com
+		servers[SERVER_WEB].setEnabled(false);
 
 		//currently signed in user
 		SharedPreferences.Editor editor = preferences.edit();
@@ -156,15 +157,15 @@ public class MeshApplication extends Application implements LogSender
 			editor.putLong("userID", userID = 0);
 			editor.putLong("lastSignInTime", lastSignInTime = 0);
 		}
-		properties.addProperty("user", new VolatileProperty<Integer>(userID, "%X", 30000));
+		properties.addProperty("user", new VolatileProperty<Integer>(userID, "%X", 120000));
 
 		//battery level and charge state
-		properties.addProperty("batt", new FloatProperty(0.5f, "%.2f", 30000, 0.1f));
-		properties.addProperty("chg", new VolatileProperty<Integer>(0, "%d", 30000));
+		properties.addProperty("batt", new FloatProperty(0.5f, "%.2f", 120000, 0.1f));
+		properties.addProperty("chg", new VolatileProperty<Integer>(0, "%d", 120000));
 
 		//device location
-		properties.addProperty("gps", new VolatileProperty<Integer>(0, "%d", 10000));
-		properties.addProperty("fix", new VolatileProperty<Integer>(0, "%d", 10000));
+		properties.addProperty("gps", new VolatileProperty<Integer>(0, "%d", 120000));
+		properties.addProperty("fix", new VolatileProperty<Integer>(0, "%d", 120000));
 		properties.addProperty("lat", new DoubleProperty(null, "%.6f", 10000, 0.000001));
 		properties.addProperty("long", new DoubleProperty(null, "%.6f", 10000, 0.000001));
 		properties.addProperty("acc", new FloatProperty(null, "%.2f", 10000, 0.1f));
@@ -172,7 +173,7 @@ public class MeshApplication extends Application implements LogSender
 		properties.addToBlacklist("fix","lat","long","acc","alt");
 
 		//mesh state
-		forceMeshConnection = preferences.getBoolean("forceMeshConnection", true);
+		forceMeshConnection = false;//preferences.getBoolean("forceMeshConnection", true);
 		properties.addProperty("node", new VolatileProperty<Integer>(0, "%d", 10000));
 
 		editor.apply();

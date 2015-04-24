@@ -27,9 +27,8 @@ public class StatusFragment extends BaseFragment
 {
     private TextView connectionState, connectedSince,
 		 id, uptime, location, battery, serverPrimary, serverSecondary,
-            locationTime, node;
-	private CheckBox forceMeshNetwork, serverPrimaryEnabled, serverSecondaryEnabled,
-		webServerEnabled;
+            locationTime;
+	private CheckBox serverPrimaryEnabled, serverSecondaryEnabled;
     private Handler timerHandler = new Handler();
     private static final String TAG = StatusFragment.class.getName();
 
@@ -50,7 +49,6 @@ public class StatusFragment extends BaseFragment
         location = (TextView)view.findViewById(R.id.field_location);
 		battery = (TextView)view.findViewById(R.id.field_battery);
         locationTime = (TextView)view.findViewById(R.id.field_device_last_location);
-		node = (TextView)view.findViewById(R.id.field_mesh_node);
 
 		MeshServer primary = MeshApplication.getServer(MeshApplication.SERVER_PRIMARY);
 		serverPrimary = (TextView)view.findViewById(R.id.field_server_primary);
@@ -74,16 +72,6 @@ public class StatusFragment extends BaseFragment
 		serverSecondaryEnabled.setChecked(secondary.isEnabled());
 		serverSecondaryEnabled.setOnClickListener(serverEnabledClickListener);
 
-		MeshServer web = MeshApplication.getServer(MeshApplication.SERVER_WEB);
-		webServerEnabled = (CheckBox)view.findViewById(R.id.network_server_web_enabled);
-		webServerEnabled.setTag(web);
-		webServerEnabled.setChecked(web.isEnabled());
-		webServerEnabled.setOnClickListener(serverEnabledClickListener);
-
-		forceMeshNetwork = (CheckBox)view.findViewById(R.id.network_change_force_mesh);
-		forceMeshNetwork.setChecked(MeshApplication.getForceMeshConnection());
-		forceMeshNetwork.setOnClickListener(forceMeshNetworkClickListener);
-
         return view;
     }
 
@@ -105,10 +93,10 @@ public class StatusFragment extends BaseFragment
     @Override
     public void update()
     {
-		id.setText(MeshApplication.getID().hex());
-        connectionState.setText(MeshApplication.isMeshConnected() ? "Yes" : "No");
 		int nodeNum  = MeshApplication.getMeshNode();
-		node.setText(nodeNum == 0 ? "N/A" : Integer.toString(nodeNum));
+		id.setText(MeshApplication.getID().hex());
+        connectionState.setText(MeshApplication.isMeshConnected()
+			? "Yes"+(nodeNum == 0 ? "" : " (Node " + Integer.toString(nodeNum)) + ")": "No");
 		Double latitude = MeshApplication.getLatitude();
 		Double longitude = MeshApplication.getLongitude();
         location.setText(latitude != null && longitude != null
@@ -146,16 +134,6 @@ public class StatusFragment extends BaseFragment
             timerHandler.postDelayed(this, 250);
         }
     };
-
-	private View.OnClickListener forceMeshNetworkClickListener = new View.OnClickListener()
-	{
-		@Override
-		public void onClick(View view)
-		{
-			CheckBox cb = (CheckBox)view;
-			MeshApplication.setForceMeshConnection(cb.isChecked());
-		}
-	};
 
 	private View.OnClickListener serverEnabledClickListener = new View.OnClickListener()
 	{

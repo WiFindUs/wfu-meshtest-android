@@ -96,9 +96,11 @@ public class LocationThread extends BaseThread implements LocationListener, GpsS
     @Override
     public long timeoutLength()
     {
-        float battery = MeshApplication.getBatteryPercentage();
+        /* float battery = MeshApplication.getBatteryPercentage();
 		return (battery >= 0.75f || MeshApplication.isBatteryCharging()) ? 1000 :
 			(battery >= 0.25 ? 2500 : 5000);
+			*/
+		return 1000;
     }
 
     @Override
@@ -131,6 +133,7 @@ public class LocationThread extends BaseThread implements LocationListener, GpsS
 		MeshApplication.updateGPSHasFix(this,
 			gpsEnabled == 1 && (SystemClock.elapsedRealtime() - lastLocationTime) < 15000);
 
+		/*
 		//check battery level shifts
 		long newTimeout = timeoutLength();
 		if (newTimeout != timeout)
@@ -138,6 +141,7 @@ public class LocationThread extends BaseThread implements LocationListener, GpsS
 			timeout = newTimeout;
 			registerLocationUpdateListener();
 		}
+		*/
     }
 
     @Override
